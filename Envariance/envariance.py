@@ -4,17 +4,17 @@ Author: Davide Ferrari
 August 2017
 
 """
-
-import operator
-import time
-from qiskit import QuantumProgram
-import Qconfig
-import xlsxwriter
-from Envariance import Utility
 import sys
-
 sys.path.append(
     "D:/PyCharm/qiskit-sdk-py")  # solve the relative dependencies if you clone QISKit from the Git repo and use like a global.
+
+from qiskit import QuantumProgram
+import Qconfig
+from Envariance import Utility
+import operator
+import math
+import  time
+import xlsxwriter
 
 cx_map_5 = {
     0: [1, 2],
@@ -26,8 +26,7 @@ cx_map_5 = {
 
 cx_map_16 = {
     0: [1],
-    1: [2],
-    2: [3],
+    1: [2],    2: [3],
     3: [14],
     4: [3, 5],
     5: [],
@@ -153,13 +152,16 @@ def lunch_exp(workbook, device, n_qubits, cx_map, num_shots=1024):
     worksheet.write(0, 3, 'Fidelity', bold)
     row = 1
     col = 0
+    fidelity = 0
     for i in sorted_c:
         worksheet.write(row, col, i[0], binary)
         worksheet.write(row, col + 1, int(i[1]))
         worksheet.write(row, col + 2, int(i[1]) / num_shots)
+        if row == 1 or row == 2:
+            fidelity += math.sqrt(int(i[1])/(2*num_shots))
         row += 1
     worksheet.write(row, col + 1, '=SUM(B2:B' + str(row) + ')')
-    worksheet.write(1, 3, '=SQRT(C2/2)+SQRT(C3/2)')
+    worksheet.write(1, 3, fidelity)
 
     chart = workbook.add_chart({'type': 'column'})
     categories = '=' + sheet + '!$A$2:$A$' + str(num_rows + 1)
