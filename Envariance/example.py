@@ -13,14 +13,35 @@ import Qconfig
 from Envariance import Utility
 import operator
 import math
+import  time
 import xlsxwriter
 
-# The coupling-map
-# coupling_map = {
-#
-# }
+coupling_map_5 = {
+    0: [1, 2],
+    1: [2],
+    2: [],
+    3: [2, 4],
+    4: [2],
+}
 
-# Back-end devices
+coupling_map_16 = {
+    0: [1],
+    1: [2],    2: [3],
+    3: [14],
+    4: [3, 5],
+    5: [],
+    6: [7, 11],
+    7: [10],
+    8: [7],
+    9: [8, 10],
+    10: [],
+    11: [10],
+    12: [5, 11, 13],
+    13: [4, 14],
+    14: [],
+    15: [0, 14],
+}
+
 real_5 = 'ibmqx2'
 
 real_16 = 'ibmqx3'
@@ -170,13 +191,39 @@ def lunch_exp(workbook, device, n_qubits, cx_map, num_shots=1024):
 
     worksheet.insert_chart('F3', chart)
 
-#
-# Decomment and fill in the missing data, refer to example.py if you have doubts
 
-# workbook = xlsxwriter.Workbook('Data/your_file.xlsx')
-#
-# lunch_exp(workbook, back-end devie, n_qubits=, cx_map=, num_shots=)
-#
-# workbook.close()
+shots = [
+    1024,
+    2048,
+    8192
+]
+
+workbook5 = xlsxwriter.Workbook('Data/ibmqx2_n_qubits_envariance.xlsx')
+
+for n_shots in shots:
+    lunch_exp(workbook5, real_5, n_qubits=2, cx_map=coupling_map_5, num_shots=n_shots)
+    time.sleep(2)
+    lunch_exp(workbook5, real_5, n_qubits=3, cx_map=coupling_map_5, num_shots=n_shots)
+    time.sleep(2)
+    lunch_exp(workbook5, real_5, n_qubits=5, cx_map=coupling_map_5, num_shots=n_shots)
+    time.sleep(2)
+
+workbook5.close()
+
+workbook16 = xlsxwriter.Workbook('Data/ibmqx3_n_qubits_envariance.xlsx')
+
+for n_shots in shots:
+    lunch_exp(workbook16, real_16, n_qubits=2, cx_map=coupling_map_16, num_shots=n_shots)
+    time.sleep(2)
+    lunch_exp(workbook16, real_16, n_qubits=3, cx_map=coupling_map_16, num_shots=n_shots)
+    time.sleep(2)
+    lunch_exp(workbook16, real_16, n_qubits=5, cx_map=coupling_map_16, num_shots=n_shots)
+    time.sleep(2)
+    lunch_exp(workbook16, real_16, n_qubits=7, cx_map=coupling_map_16, num_shots=n_shots)
+    time.sleep(2)
+    lunch_exp(workbook16, real_16, n_qubits=9, cx_map=coupling_map_16, num_shots=n_shots)
+    time.sleep(2)
+
+workbook16.close()
 
 print('\nAll done.\n')
