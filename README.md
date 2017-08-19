@@ -38,4 +38,4 @@ Below the portion of the coupling-map selected by utility.py:
 The resulting circuit:
 # ![9-qubits_envariance_circuit](images/9_env_circ.png)
 
-You cna find an exaustive example in _example.py_, where you will run the experiment on both ibmqx2 and ibmqx3 while changing the number of qubits and shots (be aware that you will need at least 10 credits on your IBM Quantum Experience account to run it).
+You can find an exaustive example in _example.py_, where you will run the experiment on both ibmqx2 and ibmqx3 while changing the number of qubits and shots (be aware that you will need at least 10 credits on your IBM Quantum Experience account to run it).
