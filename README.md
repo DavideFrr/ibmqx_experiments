@@ -7,7 +7,7 @@ The main module is _envariance.py_, here yuo can use the _lunch_exp_ function to
 
 ### Example
 
-Lets say we want to demonstrate envariance for a system of 9 qubits on ibmqx3 (9 is the maximum number of qubits that you can use on ibmqx3); utility.py will find that the most connected qubit is _Q14_ and , starting from that, will crete the crresponding circuit.
+Lets say we want to demonstrate envariance for a system of 9 qubits on ibmqx3 (9 is the maximum number of qubits that you can use on ibmqx3); utility.py will find that the most connected qubit is _Q14_ and , starting from that, will create the crresponding circuit.
 
 _ibmqx3 coupling-map_:
 # ![ibmqx3_coupling-map](images/ibmqx3_coupling-map.png)
