@@ -3,7 +3,7 @@ The purpose of this project is to demonstrate entanglement-assisted invariance, 
 
 ## Structure
 The _utility.py_ is a collection of functions that, given the coupling-map and the number of qubits, will find the most connected qubit in the map and create around it the quantum circuit needed for the demonstartion.
-The main module is _envariance.py_, here yuo can use the _lunch_exp_ function to run a circuit on a specified back-end device, with the specified number of shots and qubits; the result of the execution will be written in a _txt file_ and a _xlsx_ file for firther use.
+The main module is _envariance.py_, here yuo can use the _lunch_exp_ function to run a circuit on a specified back-end device, with the specified number of shots and qubits; the result of the execution will be written in a _txt file_ and a _xlsx_ file for further use.
 
 ### Example
 
