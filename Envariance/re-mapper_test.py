@@ -9,6 +9,7 @@ This is to test the auto re-mapping functionality of QISKit
 import sys
 
 sys.path.append(  # solve the relative dependencies if you clone QISKit from the Git repo and use like a global.
+    "your_path_to_repo/qiskit-sdk-py")
 
 from qiskit import QuantumProgram
 import Qconfig
