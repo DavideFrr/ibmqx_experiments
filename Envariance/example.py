@@ -5,14 +5,16 @@ August 2017
 
 """
 import sys
-sys.path.append(    # solve the relative dependencies if you clone QISKit from the Git repo and use like a global.
+
+sys.path.append(  # solve the relative dependencies if you clone QISKit from the Git repo and use like a global.
+    "your_path/qiskit-sdk-py")  #gitignore
 
 from qiskit import QuantumProgram
 import Qconfig
 from Envariance import Utility
 import operator
 import math
-import  time
+import time
 import xlsxwriter
 
 coupling_map_5 = {
@@ -25,7 +27,7 @@ coupling_map_5 = {
 
 coupling_map_16 = {
     0: [1],
-    1: [2],    2: [3],
+    1: [2], 2: [3],
     3: [14],
     4: [3, 5],
     5: [],
@@ -157,7 +159,7 @@ def lunch_exp(workbook, device, n_qubits, cx_map, num_shots=1024):
         worksheet.write(row, col + 1, int(i[1]))
         worksheet.write(row, col + 2, int(i[1]) / num_shots)
         if row == 1 or row == 2:
-            fidelity += math.sqrt(int(i[1])/(2*num_shots))
+            fidelity += math.sqrt(int(i[1]) / (2 * num_shots))
         row += 1
     worksheet.write(row, col + 1, '=SUM(B2:B' + str(row) + ')')
     worksheet.write(1, 3, fidelity)

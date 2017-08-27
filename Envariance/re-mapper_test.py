@@ -7,8 +7,9 @@ This is to test the auto re-mapping functionality of QISKit
 """
 
 import sys
-sys.path.append(
-    "D:/PyCharm/qiskit-sdk-py")  # solve the relative dependencies if you clone QISKit from the Git repo and use like a global.
+
+sys.path.append(  # solve the relative dependencies if you clone QISKit from the Git repo and use like a global.
+    "your_path/qiskit-sdk-py")  #gitignore
 
 from qiskit import QuantumProgram
 import Qconfig
@@ -16,7 +17,7 @@ import operator
 
 coupling_map_16 = {
     0: [1],
-    1: [2],    2: [3],
+    1: [2], 2: [3],
     3: [14],
     4: [3, 5],
     5: [],
@@ -33,17 +34,17 @@ coupling_map_16 = {
 }
 
 Q_SPECS = {
-        "circuits": [{
-            "name": "Circuit",
-            "quantum_registers": [{
-                "name": "qr",
-                "size": 16
-            }],
-            "classical_registers": [{
-                "name": "cr",
-                "size": 16
-            }]}],
-    }
+    "circuits": [{
+        "name": "Circuit",
+        "quantum_registers": [{
+            "name": "qr",
+            "size": 16
+        }],
+        "classical_registers": [{
+            "name": "cr",
+            "size": 16
+        }]}],
+}
 
 Q_program = QuantumProgram(specs=Q_SPECS)
 
@@ -69,7 +70,7 @@ for i in range(9):
         circuit.cx(quantum_r[i], quantum_r[0])
 
 for i in range(9):
-        circuit.h(quantum_r[i])
+    circuit.h(quantum_r[i])
 
 for i in range(9):
     if i < 5:

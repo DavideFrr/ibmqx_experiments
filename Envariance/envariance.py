@@ -5,8 +5,9 @@ August 2017
 
 """
 import sys
-sys.path.append(
-    "D:/PyCharm/qiskit-sdk-py")  # solve the relative dependencies if you clone QISKit from the Git repo and use like a global.
+
+sys.path.append(  # solve the relative dependencies if you clone QISKit from the Git repo and use like a global.
+    "your_path/qiskit-sdk-py")  #gitignore
 
 from qiskit import QuantumProgram
 import Qconfig
