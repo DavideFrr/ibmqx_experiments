@@ -9,17 +9,16 @@ import operator
 
 
 class Utility(object):
-    __inverse_cx_map = dict()
+    __inverse_coupling_map = dict()
     __from_all_to_all = dict()
     __connected = dict()
     __n_qubits = 0
 
-    def __init__(self, cx_map, n_qubits):
-        if cx_map:
-            self.invert_graph(cx_map, self.__inverse_cx_map)
-            # print(self.__inverse_cx_map)
-            self.__n_qubits = n_qubits
-            for i in range(len(cx_map)):
+    def __init__(self, coupling_map):
+        if coupling_map:
+            self.invert_graph(coupling_map, self.__inverse_coupling_map)
+            # print(self.__inverse_coupling_map)
+            for i in range(len(coupling_map)):
                 self.__from_all_to_all.update({i: [-1]})
                 self.__from_all_to_all[i][0] = dict()
                 # print(self.__from_all_to_all)
@@ -31,7 +30,7 @@ class Utility(object):
         self.__connected.clear()
         self.__n_qubits = 0
         self.__from_all_to_all.clear()
-        self.__inverse_cx_map.clear()
+        self.__inverse_coupling_map.clear()
 
     # create an inverted coupling-map for further use
     @staticmethod
@@ -138,12 +137,14 @@ class Utility(object):
             circuit.measure(quantum_r[qubit], classical_r[qubit])
 
     # crete the circuit
-    def create(self, circuit, quantum_r, classical_r):
+    def create(self, circuit, quantum_r, classical_r, n_qubits):
 
-        for start in self.__inverse_cx_map:
-            for end in self.__inverse_cx_map:
+        self.__n_qubits = n_qubits
+
+        for start in self.__inverse_coupling_map:
+            for end in self.__inverse_coupling_map:
                 if start != end:
-                    paths = self.find_all_paths(self.__inverse_cx_map, start, end)
+                    paths = self.find_all_paths(self.__inverse_coupling_map, start, end)
                     if len(paths) != 0:
                         self.__from_all_to_all[start][0][end] = paths
 
@@ -156,10 +157,12 @@ class Utility(object):
             print('\nCan use only up to %s qubits' % str(max_path[0] + 1))
             exit(2)
         # print(max_path)
-        self.create_path(max_path[1], self.__inverse_cx_map)
+        self.create_path(max_path[1], self.__inverse_coupling_map)
         # print(self.__connected)
         self.place_h(circuit, max_path[1], quantum_r)
         self.place_cx_(circuit, quantum_r)
         self.place_h(circuit, max_path[1], quantum_r, initial=False)
         self.place_x(circuit, quantum_r)
         self.measure(circuit, quantum_r, classical_r)
+        self.__connected.clear()
+        self.__n_qubits = 0

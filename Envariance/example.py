@@ -51,11 +51,9 @@ online_sim = 'ibmqx_qasm_simulator'
 
 
 # lunch envariance experiment on the given device
-def lunch_exp(workbook, device, n_qubits, cx_map, num_shots=1024):
+def lunch_exp(workbook, device, utility, n_qubits, num_shots=1024):
     size = 0
 
-    if cx_map is None:
-        cx_map = {}
     if device == real_5:
         if n_qubits <= 5:
             size = 5
@@ -92,8 +90,6 @@ def lunch_exp(workbook, device, n_qubits, cx_map, num_shots=1024):
             }]}],
     }
 
-    util = Utility(cx_map, n_qubits=n_qubits)
-
     Q_program = QuantumProgram(specs=Q_SPECS)
 
     # Get the components.
@@ -108,7 +104,7 @@ def lunch_exp(workbook, device, n_qubits, cx_map, num_shots=1024):
     classical_r = Q_program.get_classical_registers('cr')
 
     # crete circuit needed for the envariance experiment
-    util.create(circuit, quantum_r, classical_r)
+    utility.create(circuit, quantum_r, classical_r, n_qubits)
 
     QASM_source = Q_program.get_qasm("Circuit")
 
@@ -122,11 +118,9 @@ def lunch_exp(workbook, device, n_qubits, cx_map, num_shots=1024):
 
     counts = Q_program.get_counts("Circuit")
 
-    util.close()
-
     sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 
-    out_f = open('Data/' + device + '_' + str(num_shots) + '_' + str(n_qubits) + '_qubits_envariance.txt', 'w')
+    out_f = open(device + '_' + str(num_shots) + '_' + str(n_qubits) + '_qubits_envariance.txt', 'w')
 
     # store counts in txt file and xlsx file
     out_f.write('VALUES\n\n')
@@ -199,31 +193,37 @@ shots = [
     8192
 ]
 
-workbook5 = xlsxwriter.Workbook('Data/ibmqx2_n_qubits_envariance.xlsx')
+workbook5 = xlsxwriter.Workbook('ibmqx2_n_qubits_envariance.xlsx')
 
+utility = Utility(coupling_map_5)
 for n_shots in shots:
-    lunch_exp(workbook5, real_5, n_qubits=2, cx_map=coupling_map_5, num_shots=n_shots)
+    lunch_exp(workbook5, real_5, utility, n_qubits=2, num_shots=n_shots)
     time.sleep(2)
-    lunch_exp(workbook5, real_5, n_qubits=3, cx_map=coupling_map_5, num_shots=n_shots)
+    lunch_exp(workbook5, real_5, utility, n_qubits=3, num_shots=n_shots)
     time.sleep(2)
-    lunch_exp(workbook5, real_5, n_qubits=5, cx_map=coupling_map_5, num_shots=n_shots)
+    lunch_exp(workbook5, real_5, utility, n_qubits=5, num_shots=n_shots)
     time.sleep(2)
+
+utility.close()
 
 workbook5.close()
 
 workbook16 = xlsxwriter.Workbook('Data/ibmqx3_n_qubits_envariance.xlsx')
 
+utility = Utility(coupling_map_16)
 for n_shots in shots:
-    lunch_exp(workbook16, real_16, n_qubits=2, cx_map=coupling_map_16, num_shots=n_shots)
+    lunch_exp(workbook16, real_16, utility, n_qubits=2, num_shots=n_shots)
     time.sleep(2)
-    lunch_exp(workbook16, real_16, n_qubits=3, cx_map=coupling_map_16, num_shots=n_shots)
+    lunch_exp(workbook16, real_16, utility, n_qubits=3, num_shots=n_shots)
     time.sleep(2)
-    lunch_exp(workbook16, real_16, n_qubits=5, cx_map=coupling_map_16, num_shots=n_shots)
+    lunch_exp(workbook16, real_16, utility, n_qubits=5, num_shots=n_shots)
     time.sleep(2)
-    lunch_exp(workbook16, real_16, n_qubits=7, cx_map=coupling_map_16, num_shots=n_shots)
+    lunch_exp(workbook16, real_16, utility, n_qubits=7, num_shots=n_shots)
     time.sleep(2)
-    lunch_exp(workbook16, real_16, n_qubits=9, cx_map=coupling_map_16, num_shots=n_shots)
+    lunch_exp(workbook16, real_16, utility, n_qubits=9, num_shots=n_shots)
     time.sleep(2)
+
+utility.close()
 
 workbook16.close()
 

@@ -29,12 +29,10 @@ real_16 = 'ibmqx3'
 online_sim = 'ibmqx_qasm_simulator'
 
 
-# lunch envariance experiment on the given device
-def lunch_exp(workbook, device, n_qubits, cx_map, num_shots=1024):
+# launch envariance experiment on the given device
+def lunch_exp(workbook, device, utility, n_qubits, num_shots=1024):
     size = 0
 
-    if cx_map is None:
-        cx_map = {}
     if device == real_5:
         if n_qubits <= 5:
             size = 5
@@ -71,8 +69,6 @@ def lunch_exp(workbook, device, n_qubits, cx_map, num_shots=1024):
             }]}],
     }
 
-    util = Utility(cx_map, n_qubits=n_qubits)
-
     Q_program = QuantumProgram(specs=Q_SPECS)
 
     # Get the components.
@@ -87,7 +83,7 @@ def lunch_exp(workbook, device, n_qubits, cx_map, num_shots=1024):
     classical_r = Q_program.get_classical_registers('cr')
 
     # crete circuit needed for the envariance experiment
-    util.create(circuit, quantum_r, classical_r)
+    utility.create(circuit, quantum_r, classical_r, n_qubits)
 
     QASM_source = Q_program.get_qasm("Circuit")
 
@@ -100,8 +96,6 @@ def lunch_exp(workbook, device, n_qubits, cx_map, num_shots=1024):
     Q_program.execute(circuits, device, wait=2, timeout=480, shots=num_shots, max_credits=10)
 
     counts = Q_program.get_counts("Circuit")
-
-    util.close()
 
     sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 
@@ -175,9 +169,9 @@ def lunch_exp(workbook, device, n_qubits, cx_map, num_shots=1024):
 # Decomment and fill in the missing data, refer to example.py if you have doubts
 
 # workbook = xlsxwriter.Workbook('Data/your_file.xlsx')
-#
-# lunch_exp(workbook, back-end devie, n_qubits=, cx_map=, num_shots=)
-#
+# utility = Utility('coupling_map')
+# lunch_exp(workbook, 'back-end devie', utility, n_qubits=, num_shots=)
+# utility.close()
 # workbook.close()
 
 print('\nAll done.\n')
