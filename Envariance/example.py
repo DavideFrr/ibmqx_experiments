@@ -120,7 +120,7 @@ def lunch_exp(workbook, device, utility, n_qubits, num_shots=1024):
 
     sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 
-    out_f = open(device + '_' + str(num_shots) + '_' + str(n_qubits) + '_qubits_envariance.txt', 'w')
+    out_f = open('Data/' + device + '_' + str(num_shots) + '_' + str(n_qubits) + '_qubits_envariance.txt', 'w')
 
     # store counts in txt file and xlsx file
     out_f.write('VALUES\n\n')
@@ -193,7 +193,7 @@ shots = [
     8192
 ]
 
-workbook5 = xlsxwriter.Workbook('ibmqx2_n_qubits_envariance.xlsx')
+workbook5 = xlsxwriter.Workbook('Data/ibmqx2_n_qubits_envariance.xlsx')
 
 utility = Utility(coupling_map_5)
 for n_shots in shots:
