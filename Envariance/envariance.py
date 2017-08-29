@@ -166,7 +166,7 @@ def lunch_exp(workbook, device, utility, n_qubits, num_shots=1024):
     worksheet.insert_chart('F3', chart)
 
 #
-# Decomment and fill in the missing data, refer to example.py if you have doubts
+# Uncomment and fill in the missing data, refer to example.py if you have doubts
 
 # workbook = xlsxwriter.Workbook('Data/your_file.xlsx')
 # utility = Utility('coupling_map')
