@@ -3,11 +3,11 @@ The purpose of this project is to demonstrate entanglement-assisted invariance, 
 
 ## Structure
 The _utility.py_ is a collection of functions that, given the coupling-map and the number of qubits, will find the most connected qubit in the map and create around it the quantum circuit needed for the demonstartion.
-The main module is _envariance.py_, here yuo can use the _lunch_exp_ function to run a circuit on a specified back-end device, with the specified number of shots and qubits; the result of the execution will be written in a _txt file_ and a _xlsx_ file for further use.
+In _envariance.py_ yuo can use the _lunch_exp_ function to run a circuit, using _utility.create(...)_, on a specified back-end device, with the specified number of shots and qubits; the result of the execution will be written in a _txt file_ and a _xlsx_ file for further use.
 
 ### Example
 
-Lets say we want to demonstrate envariance for a system of 9 qubits on ibmqx3 (9 is the maximum number of qubits that you wiil be able to use on ibmqx3 for htis experiment); utility.py will find that the most connected qubit is _Q14_ and , starting from that, will create the crresponding circuit.
+Lets say we want to demonstrate envariance for a system of 9 qubits on ibmqx3 (9 is the maximum number of qubits that you wiil be able to use on ibmqx3 for this experiment); utility.py will find that the most connected qubit is _Q14_ and , starting from that, will create the crresponding circuit.
 
 _ibmqx3 coupling-map_:
 # ![ibmqx3_coupling-map](images/ibmqx3_coupling-map.png)
