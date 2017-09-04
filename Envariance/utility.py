@@ -136,7 +136,7 @@ class Utility(object):
         for qubit in self.__connected:
             circuit.measure(quantum_r[qubit], classical_r[qubit])
 
-    # crete the circuit
+    # create the circuit
     def create(self, circuit, quantum_r, classical_r, n_qubits):
 
         self.__n_qubits = n_qubits
