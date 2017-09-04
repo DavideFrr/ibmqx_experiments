@@ -3,7 +3,7 @@ The purpose of this project is to demonstrate entanglement-assisted invariance, 
 
 ## Structure
 The [_utility.py_](Envariance/utility.py) is a collection of functions that, given the coupling-map and the number of qubits, will find the most connected qubit in the map and create around it the quantum circuit needed for the demonstartion.
-In [_envariance.py_](Envariance/envariance.py) yuo can use the _launch_exp_ function to run a circuit, using _utility.create(...)_, on a specified back-end device, with the specified number of shots and qubits; the result of the execution will be written in a _txt file_ and a _xlsx_ file for further use.
+In [_envariance.py_](Envariance/envariance.py) yuo can use the [_launch_exp_](https://github.com/DavideFrr/ibmqx_envariance/blob/46829434dc18744d2f16d0d993c2db3160b9fd88/Envariance/envariance.py#L33) function to run a circuit, using [_utility.create(...)_](https://github.com/DavideFrr/ibmqx_envariance/blob/46829434dc18744d2f16d0d993c2db3160b9fd88/Envariance/utility.py#L140), on a specified back-end device, with the specified number of shots and qubits; the result of the execution will be written in a _txt file_ and a _xlsx_ file for further use.
 
 ### What it does
 
