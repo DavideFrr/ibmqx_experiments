@@ -2,8 +2,8 @@
 The purpose of this project is to demonstrate entanglement-assisted invariance, aka _envariance_, using the existing (and perhaps future) _ibmqx_ series quantum computers.
 
 ## Structure
-The [_utility.py_](Envariance/utility.py) is a collection of functions that, given the coupling-map and the number of qubits, will find the most connected qubit in the map and create around it the quantum circuit needed for the demonstartion.
-In [_envariance.py_](Envariance/envariance.py) yuo can use the [_launch_exp_](https://github.com/DavideFrr/ibmqx_envariance/blob/46829434dc18744d2f16d0d993c2db3160b9fd88/Envariance/envariance.py#L33) function to run a circuit, using [_utility.create(...)_](https://github.com/DavideFrr/ibmqx_envariance/blob/46829434dc18744d2f16d0d993c2db3160b9fd88/Envariance/utility.py#L140), on a specified back-end device, with the specified number of shots and qubits; the result of the execution will be written in a _txt file_ and a _xlsx_ file for further use.
+The [_utility.py_](https://github.com/DavideFrr/ibmqx_envariance/blob/master/Envariance/utility.py) is a collection of functions that, given the coupling-map and the number of qubits, will find the most connected qubit in the map and create around it the quantum circuit needed for the demonstartion.
+In [_envariance.py_](https://github.com/DavideFrr/ibmqx_envariance/blob/master/Envariance/envariance.py) yuo can use the [_launch_exp_](https://github.com/DavideFrr/ibmqx_envariance/blob/46829434dc18744d2f16d0d993c2db3160b9fd88/Envariance/envariance.py#L33) function to run a circuit, using [_utility.create(...)_](https://github.com/DavideFrr/ibmqx_envariance/blob/46829434dc18744d2f16d0d993c2db3160b9fd88/Envariance/utility.py#L140), on a specified back-end device, with the specified number of shots and qubits; the result of the execution will be written in a _txt file_ and a _xlsx_ file for further use.
 
 ### What it does
 
@@ -39,4 +39,4 @@ The resulting circuit:
 # ![9-qubits_envariance_circuit](images/9_env_circ.png)
 
 ## Example
-You can find an exaustive example in [_example.py_](Envariance/example.py), where you will run the experiment on both ibmqx2 and ibmqx3 while changing the number of qubits and shots (be aware that you will need at least 5 credits on your IBM Quantum Experience account to run it).
+You can find an exaustive example in [_example.py_](https://github.com/DavideFrr/ibmqx_envariance/blob/master/Envariance/example.py), where you will run the experiment on both ibmqx2 and ibmqx3 while changing the number of qubits and shots (be aware that you will need at least 5 credits on your IBM Quantum Experience account to run it).
