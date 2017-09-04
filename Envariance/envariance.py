@@ -30,7 +30,7 @@ online_sim = 'ibmqx_qasm_simulator'
 
 
 # launch envariance experiment on the given device
-def lunch_exp(workbook, device, utility, n_qubits, num_shots=1024):
+def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
     size = 0
 
     if device == real_5:
@@ -170,7 +170,7 @@ def lunch_exp(workbook, device, utility, n_qubits, num_shots=1024):
 
 # workbook = xlsxwriter.Workbook('Data/your_file.xlsx')
 # utility = Utility('coupling_map')
-# lunch_exp(workbook, 'back-end devie', utility, n_qubits=, num_shots=)
+# launch_exp(workbook, 'back-end devie', utility, n_qubits=, num_shots=)
 # utility.close()
 # workbook.close()
 

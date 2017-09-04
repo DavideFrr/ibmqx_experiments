@@ -50,8 +50,8 @@ real_16 = 'ibmqx3'
 online_sim = 'ibmqx_qasm_simulator'
 
 
-# lunch envariance experiment on the given device
-def lunch_exp(workbook, device, utility, n_qubits, num_shots=1024):
+# launch envariance experiment on the given device
+def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
     size = 0
 
     if device == real_5:
@@ -197,11 +197,11 @@ workbook5 = xlsxwriter.Workbook('Data/ibmqx2_n_qubits_envariance.xlsx')
 
 utility = Utility(coupling_map_5)
 for n_shots in shots:
-    lunch_exp(workbook5, real_5, utility, n_qubits=2, num_shots=n_shots)
+    launch_exp(workbook5, real_5, utility, n_qubits=2, num_shots=n_shots)
     time.sleep(2)
-    lunch_exp(workbook5, real_5, utility, n_qubits=3, num_shots=n_shots)
+    launch_exp(workbook5, real_5, utility, n_qubits=3, num_shots=n_shots)
     time.sleep(2)
-    lunch_exp(workbook5, real_5, utility, n_qubits=5, num_shots=n_shots)
+    launch_exp(workbook5, real_5, utility, n_qubits=5, num_shots=n_shots)
     time.sleep(2)
 
 utility.close()
@@ -212,15 +212,15 @@ workbook16 = xlsxwriter.Workbook('Data/ibmqx3_n_qubits_envariance.xlsx')
 
 utility = Utility(coupling_map_16)
 for n_shots in shots:
-    lunch_exp(workbook16, real_16, utility, n_qubits=2, num_shots=n_shots)
+    launch_exp(workbook16, real_16, utility, n_qubits=2, num_shots=n_shots)
     time.sleep(2)
-    lunch_exp(workbook16, real_16, utility, n_qubits=3, num_shots=n_shots)
+    launch_exp(workbook16, real_16, utility, n_qubits=3, num_shots=n_shots)
     time.sleep(2)
-    lunch_exp(workbook16, real_16, utility, n_qubits=5, num_shots=n_shots)
+    launch_exp(workbook16, real_16, utility, n_qubits=5, num_shots=n_shots)
     time.sleep(2)
-    lunch_exp(workbook16, real_16, utility, n_qubits=7, num_shots=n_shots)
+    launch_exp(workbook16, real_16, utility, n_qubits=7, num_shots=n_shots)
     time.sleep(2)
-    lunch_exp(workbook16, real_16, utility, n_qubits=9, num_shots=n_shots)
+    launch_exp(workbook16, real_16, utility, n_qubits=9, num_shots=n_shots)
     time.sleep(2)
 
 utility.close()
