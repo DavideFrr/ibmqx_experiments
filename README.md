@@ -1,5 +1,5 @@
 # ibmqx_envariance
-The purpose of this project is to demonstrate entanglement-assisted invariance, aka _envariance_, using the existing (and perhaps future) _ibmqx_ series quantum computers.
+The purpose of this project is to demonstrate entanglement-assisted invariance, also known as _envariance_, using the existing (and perhaps future) _ibmqx_ series quantum computers.
 
 ## Structure
 The [_utility.py_](https://github.com/DavideFrr/ibmqx_envariance/blob/master/Envariance/utility.py) is a collection of functions that, given the coupling-map and the number of qubits, will find the most connected qubit in the map and create around it the quantum circuit needed for the demonstartion.
