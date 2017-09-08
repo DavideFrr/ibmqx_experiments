@@ -66,7 +66,7 @@ classical_r = Q_program.get_classical_registers('cr')
 
 utility = Utility(coupling_map_16)
 
-# crete circuit needed for the envariance experiment
+# create circuit needed for the envariance experiment
 # utility.envariance(circuit, quantum_r, classical_r, n_qubits)
 
 utility.oracle(circuit, quantum_r, classical_r, n_qubits)
