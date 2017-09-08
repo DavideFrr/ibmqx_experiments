@@ -59,32 +59,34 @@ quantum_r = Q_program.get_quantum_registers("qr")
 # get the Classical Register by Name
 classical_r = Q_program.get_classical_registers('cr')
 
-for i in range(9):
+size = 5
+
+for i in range(size):
     if i != 0:
         circuit.h(quantum_r[i])
     else:
         circuit.x(quantum_r[i])
 
-for i in range(9):
+for i in range(size):
     if i != 0:
         circuit.cx(quantum_r[i], quantum_r[0])
 
-for i in range(9):
+for i in range(size):
     circuit.h(quantum_r[i])
 
-for i in range(9):
-    if i < 5:
-        circuit.x(quantum_r[i])
-    else:
-        circuit.iden(quantum_r[i])
+# for i in range(9):
+#     if i < 5:
+#         circuit.x(quantum_r[i])
+#     else:
+#         circuit.iden(quantum_r[i])
+#
+# for i in range(9):
+#     if i < 5:
+#         circuit.iden(quantum_r[i])
+#     else:
+#         circuit.x(quantum_r[i])
 
-for i in range(9):
-    if i < 5:
-        circuit.iden(quantum_r[i])
-    else:
-        circuit.x(quantum_r[i])
-
-for i in range(9):
+for i in range(size):
     circuit.measure(quantum_r[i], classical_r[i])
 
 QASM_source = Q_program.get_qasm("Circuit")
@@ -95,7 +97,7 @@ circuits = ["Circuit"]  # Group of circuits to execute
 
 Q_program.set_api(Qconfig.APItoken, Qconfig.config["url"])  # set the APIToken and API url
 
-Q_program.execute(circuits, 'ibmqx3', wait=2, timeout=480, shots=8192, max_credits=10, coupling_map=coupling_map_16)
+Q_program.execute(circuits, 'ibmqx_qasm_simulator', wait=2, timeout=480, shots=1024, max_credits=10, coupling_map=coupling_map_16)
 
 counts = Q_program.get_counts("Circuit")
 
@@ -103,7 +105,7 @@ print(counts)
 
 sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 
-out_f = open('Data/' + 're-mapper_ibmqx3' + '_' + str(8192) + '_' + str(9) + '_qubits_envariance.txt', 'w')
+out_f = open('re-mapper_ibmqx3' + '_' + str(8192) + '_' + str(size) + '_qubits_envariance.txt', 'w')
 
 # store counts in txt file and xlsx file
 out_f.write('VALUES\n\n')

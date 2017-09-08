@@ -162,7 +162,7 @@ class Utility(object):
         self.place_h(circuit, max_path[1], quantum_r)
         self.place_cx_(circuit, quantum_r)
         self.place_h(circuit, max_path[1], quantum_r, initial=False)
-        self.place_x(circuit, quantum_r)
+        # self.place_x(circuit, quantum_r)
         self.measure(circuit, quantum_r, classical_r)
         self.__connected.clear()
         self.__n_qubits = 0
