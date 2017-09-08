@@ -36,7 +36,7 @@ online_sim = 'ibmqx_qasm_simulator'
 
 local_sim = 'local_qasm_simulator'
 
-n_qubits = 9
+n_qubits = 5
 
 Q_SPECS = {
         "circuits": [{
@@ -67,7 +67,9 @@ classical_r = Q_program.get_classical_registers('cr')
 utility = Utility(coupling_map_16)
 
 # crete circuit needed for the envariance experiment
-utility.create(circuit, quantum_r, classical_r, n_qubits)
+# utility.envariance(circuit, quantum_r, classical_r, n_qubits)
+
+utility.oracle(circuit, quantum_r, classical_r, n_qubits)
 
 QASM_source = Q_program.get_qasm("Circuit")
 

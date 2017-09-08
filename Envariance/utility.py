@@ -77,6 +77,14 @@ class Utility(object):
                     paths.append(newpath)
         return paths
 
+    def from_all_to_all(self):
+        for start in self.__inverse_coupling_map:
+            for end in self.__inverse_coupling_map:
+                if start != end:
+                    paths = self.find_all_paths(self.__inverse_coupling_map, start, end)
+                    if len(paths) != 0:
+                        self.__from_all_to_all[start][0][end] = paths
+
     # create a valid path that connect qubits used in the circuit
     def create_path(self, start, graph):
         self.__connected.update({start: -1})
@@ -101,13 +109,14 @@ class Utility(object):
                 circuit.cx(quantum_r[qubit], quantum_r[self.__connected[qubit]])
                 # place Hadamard gates
 
-    def place_h(self, circuit, start, quantum_r, initial=True):
+    def place_h(self, circuit, start, quantum_r, initial=True, x=True):
         for qubit in self.__connected:
             if qubit != start:
                 circuit.h(quantum_r[qubit])
             else:
                 if initial is True:
-                    circuit.x(quantum_r[qubit])
+                    if x is True:
+                        circuit.x(quantum_r[qubit])
                 else:
                     circuit.h(quantum_r[qubit])
 
@@ -137,20 +146,22 @@ class Utility(object):
             circuit.measure(quantum_r[qubit], classical_r[qubit])
 
     # create the circuit
-    def create(self, circuit, quantum_r, classical_r, n_qubits):
+    def create(self, circuit, quantum_r, classical_r, n_qubits, x=True):
 
         self.__n_qubits = n_qubits
 
-        for start in self.__inverse_coupling_map:
-            for end in self.__inverse_coupling_map:
-                if start != end:
-                    paths = self.find_all_paths(self.__inverse_coupling_map, start, end)
-                    if len(paths) != 0:
-                        self.__from_all_to_all[start][0][end] = paths
+        # for start in self.__inverse_coupling_map:
+        #     for end in self.__inverse_coupling_map:
+        #         if start != end:
+        #             paths = self.find_all_paths(self.__inverse_coupling_map, start, end)
+        #             if len(paths) != 0:
+        #                 self.__from_all_to_all[start][0][end] = paths
 
         # for node in self.__from_all_to_all:
         #     print('\n%d\n' % node)
         #     print(self.__from_all_to_all[node])
+
+        self.from_all_to_all()
 
         max_path = self.find_max(self.__from_all_to_all)
         if max_path[0] + 1 < self.__n_qubits:
@@ -159,10 +170,17 @@ class Utility(object):
         # print(max_path)
         self.create_path(max_path[1], self.__inverse_coupling_map)
         # print(self.__connected)
-        self.place_h(circuit, max_path[1], quantum_r)
+        self.place_h(circuit, max_path[1], quantum_r, x=x)
         self.place_cx_(circuit, quantum_r)
         self.place_h(circuit, max_path[1], quantum_r, initial=False)
-        # self.place_x(circuit, quantum_r)
+        if x is True:
+            self.place_x(circuit, quantum_r)
         self.measure(circuit, quantum_r, classical_r)
         self.__connected.clear()
         self.__n_qubits = 0
+
+    def envariance(self, circuit, quantum_r, classicla_r, n_qubits):
+        self.create(circuit, quantum_r, classicla_r, n_qubits)
+
+    def oracle(self, circuit, quantum_r, classicla_r, n_qubits):
+        self.create(circuit, quantum_r, classicla_r, n_qubits, x=False)
