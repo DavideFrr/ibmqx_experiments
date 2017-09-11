@@ -102,13 +102,13 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
     out_f = open('Data/' + device + '_' + str(num_shots) + '_' + str(n_qubits) + '_qubits_envariance.txt', 'w')
 
     # store counts in txt file and xlsx file
-    out_f.write('VALUES\n\n')
+    out_f.write('VALUES\t\tCOUNTS\n\n')
     for i in sorted_c:
-        out_f.write(i[0] + '\n')
+        out_f.write(i[0] + '\t' + str(i[1]) + '\n')
 
-    out_f.write('\nCOUNTS\n\n')
-    for i in sorted_c:
-        out_f.write(str(i[1]) + '\n')
+    # out_f.write('\nCOUNTS\n\n')
+    # for i in sorted_c:
+    #     out_f.write(str(i[1]) + '\n')
 
     out_f.close()
 

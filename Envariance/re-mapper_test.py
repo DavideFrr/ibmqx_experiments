@@ -59,7 +59,7 @@ quantum_r = Q_program.get_quantum_register("qr")
 # get the Classical Register by Name
 classical_r = Q_program.get_classical_register('cr')
 
-size = 5
+size = 3
 
 for i in range(size):
     if i != 0:
@@ -105,15 +105,15 @@ print(counts)
 
 sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 
-out_f = open('Data/re-mapper_ibmqx3' + '_' + str(8192) + '_' + str(size) + '_qubits_envariance.txt', 'w')
+out_f = open('re-mapper_ibmqx3' + '_' + str(8192) + '_' + str(size) + '_qubits_envariance.txt', 'w')
 
 # store counts in txt file and xlsx file
-out_f.write('VALUES\n\n')
+out_f.write('VALUES\t\tCOUNTS\n\n')
 for i in sorted_c:
-    out_f.write(i[0] + '\n')
+    out_f.write(i[0] + '\t' + str(i[1]) + '\n')
 
-out_f.write('\nCOUNTS\n\n')
-for i in sorted_c:
-    out_f.write(str(i[1]) + '\n')
+# out_f.write('\nCOUNTS\n\n')
+# for i in sorted_c:
+#     out_f.write(str(i[1]) + '\n')
 
 out_f.close()
