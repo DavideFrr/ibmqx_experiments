@@ -54,10 +54,10 @@ Q_program = QuantumProgram(specs=Q_SPECS)
 circuit = Q_program.get_circuit("Circuit")
 
 # get the Quantum Register by Name
-quantum_r = Q_program.get_quantum_registers("qr")
+quantum_r = Q_program.get_quantum_register("qr")
 
 # get the Classical Register by Name
-classical_r = Q_program.get_classical_registers('cr')
+classical_r = Q_program.get_classical_register('cr')
 
 size = 5
 
@@ -97,15 +97,15 @@ circuits = ["Circuit"]  # Group of circuits to execute
 
 Q_program.set_api(Qconfig.APItoken, Qconfig.config["url"])  # set the APIToken and API url
 
-Q_program.execute(circuits, 'ibmqx_qasm_simulator', wait=2, timeout=480, shots=1024, max_credits=10, coupling_map=coupling_map_16)
+result = Q_program.execute(circuits, 'ibmqx_qasm_simulator', wait=2, timeout=480, shots=1024, max_credits=10, coupling_map=coupling_map_16, silent=False)
 
-counts = Q_program.get_counts("Circuit")
+counts = result.get_counts("Circuit")
 
 print(counts)
 
 sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 
-out_f = open('re-mapper_ibmqx3' + '_' + str(8192) + '_' + str(size) + '_qubits_envariance.txt', 'w')
+out_f = open('Data/re-mapper_ibmqx3' + '_' + str(8192) + '_' + str(size) + '_qubits_envariance.txt', 'w')
 
 # store counts in txt file and xlsx file
 out_f.write('VALUES\n\n')

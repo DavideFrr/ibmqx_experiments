@@ -77,10 +77,10 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
     circuit = Q_program.get_circuit("Circuit")
 
     # get the Quantum Register by Name
-    quantum_r = Q_program.get_quantum_registers("qr")
+    quantum_r = Q_program.get_quantum_register("qr")
 
     # get the Classical Register by Name
-    classical_r = Q_program.get_classical_registers('cr')
+    classical_r = Q_program.get_classical_register('cr')
 
     # crete circuit needed for the envariance experiment
     utility.create(circuit, quantum_r, classical_r, n_qubits)
@@ -93,9 +93,9 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
 
     Q_program.set_api(Qconfig.APItoken, Qconfig.config["url"])  # set the APIToken and API url
 
-    Q_program.execute(circuits, device, wait=2, timeout=480, shots=num_shots, max_credits=10)
+    result = Q_program.execute(circuits, device, wait=2, timeout=480, shots=num_shots, max_credits=10, silent=False)
 
-    counts = Q_program.get_counts("Circuit")
+    counts = result.get_counts("Circuit")
 
     sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 

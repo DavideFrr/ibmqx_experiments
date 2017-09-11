@@ -36,7 +36,7 @@ online_sim = 'ibmqx_qasm_simulator'
 
 local_sim = 'local_qasm_simulator'
 
-n_qubits = 5
+n_qubits = 2
 
 Q_SPECS = {
         "circuits": [{
@@ -59,10 +59,10 @@ Q_program = QuantumProgram(specs=Q_SPECS)
 circuit = Q_program.get_circuit("Circuit")
 
 # get the Quantum Register by Name
-quantum_r = Q_program.get_quantum_registers("qr")
+quantum_r = Q_program.get_quantum_register("qr")
 
 # get the Classical Register by Name
-classical_r = Q_program.get_classical_registers('cr')
+classical_r = Q_program.get_classical_register('cr')
 
 utility = Utility(coupling_map_16)
 
@@ -79,9 +79,9 @@ circuits = ["Circuit"]  # Group of circuits to execute
 
 Q_program.set_api(Qconfig.APItoken, Qconfig.config["url"])  # set the APIToken and API url
 
-Q_program.execute(circuits, online_sim, wait=2, timeout=480, shots=1024, max_credits=10)
+result = Q_program.execute(circuits, backend=online_sim, wait=2, timeout=480, shots=1024, max_credits=10, silent=False)
 
-counts = Q_program.get_counts("Circuit")
+counts = result.get_counts("Circuit")
 
 print(counts)
 
