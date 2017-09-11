@@ -103,8 +103,8 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
     # get the Classical Register by Name
     classical_r = Q_program.get_classical_registers('cr')
 
-    # crete circuit needed for the envariance experiment
-    utility.create(circuit, quantum_r, classical_r, n_qubits)
+    # create circuit needed for the envariance experiment
+    utility.envariance(circuit, quantum_r, classical_r, n_qubits)
 
     QASM_source = Q_program.get_qasm("Circuit")
 
