@@ -43,6 +43,7 @@ coupling_map_16 = {
     15: [0, 14],
 }
 
+# Back-end devices
 real_5 = 'ibmqx2'
 
 real_16 = 'ibmqx3'

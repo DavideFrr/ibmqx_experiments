@@ -27,7 +27,8 @@ coupling_map_16 = {
     14: [],
     15: [0, 14],
 }
-
+# You can use the following abbreviation for device bakend
+# If you use ibmqx2 remember to change the size parameters in Q_SPECS to 5
 real_5 = 'ibmqx2'
 
 real_16 = 'ibmqx3'
@@ -36,6 +37,7 @@ online_sim = 'ibmqx_qasm_simulator'
 
 local_sim = 'local_qasm_simulator'
 
+# Set the number of qubits to be used in the experiment
 n_qubits = 2
 
 Q_SPECS = {

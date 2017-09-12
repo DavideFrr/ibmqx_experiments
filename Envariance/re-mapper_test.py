@@ -3,7 +3,7 @@
 Author: Davide Ferrari
 August 2017
 
-This is to test the auto re-mapping functionality of QISKit
+This is to test the auto re-mapping functionality of QISKit on ibmqx3
 """
 
 import sys
@@ -59,19 +59,20 @@ quantum_r = Q_program.get_quantum_register("qr")
 # get the Classical Register by Name
 classical_r = Q_program.get_classical_register('cr')
 
-size = 3
+# Number of qubits to be used
+n_qubits = 3
 
-for i in range(size):
+for i in range(n_qubits):
     if i != 0:
         circuit.h(quantum_r[i])
     else:
         circuit.x(quantum_r[i])
 
-for i in range(size):
+for i in range(n_qubits):
     if i != 0:
         circuit.cx(quantum_r[i], quantum_r[0])
 
-for i in range(size):
+for i in range(n_qubits):
     circuit.h(quantum_r[i])
 
 # for i in range(9):
@@ -86,7 +87,7 @@ for i in range(size):
 #     else:
 #         circuit.x(quantum_r[i])
 
-for i in range(size):
+for i in range(n_qubits):
     circuit.measure(quantum_r[i], classical_r[i])
 
 QASM_source = Q_program.get_qasm("Circuit")
@@ -105,7 +106,7 @@ print(counts)
 
 sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 
-out_f = open('re-mapper_ibmqx3' + '_' + str(8192) + '_' + str(size) + '_qubits_envariance.txt', 'w')
+out_f = open('re-mapper_ibmqx3' + '_' + str(8192) + '_' + str(n_qubits) + '_qubits_envariance.txt', 'w')
 
 # store counts in txt file and xlsx file
 out_f.write('VALUES\t\tCOUNTS\n\n')
