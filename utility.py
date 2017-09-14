@@ -137,6 +137,7 @@ class Utility(object):
     def place_x(self, circuit, quantum_r):
         # s_0 = math.floor(self.__n_qubits/2)
         sorted_c = sorted(self.__connected.items(), key=operator.itemgetter(0))
+        print(sorted_c)
         s_0 = self.__n_qubits // 2
         i = 0
         for qubit in sorted_c:
