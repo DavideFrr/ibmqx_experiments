@@ -195,7 +195,7 @@ class Utility(object):
         self.__connected.clear()
         self.__n_qubits = 0
 
-    def oracle(self, circuit, quantum_r, classicla_r, n_qubits, k='11', connected=[]):
+    def parity(self, circuit, quantum_r, classicla_r, n_qubits, k='11', connected=[]):
         self.create(circuit, quantum_r, classicla_r, n_qubits, x=False, k=k)
         for i in self.__connected:
             connected.append(i)

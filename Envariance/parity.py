@@ -1,9 +1,3 @@
-"""
-
-Author: Davide Ferrari
-August 2017
-
-"""
 import sys
 
 sys.path.append(  # solve the relative dependencies if you clone QISKit from the Git repo and use like a global.
@@ -14,16 +8,8 @@ import Qconfig
 from Envariance import Utility
 import operator
 import math
-import time
 import xlsxwriter
-
-coupling_map_5 = {
-    0: [1, 2],
-    1: [2],
-    2: [],
-    3: [2, 4],
-    4: [2],
-}
+import time
 
 coupling_map_16 = {
     0: [1],
@@ -54,8 +40,12 @@ local_sim = 'local_qasm_simulator'
 
 
 # launch envariance experiment on the given device
-def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
+def launch_exp(workbook, device, utility, n_qubits, k='11', num_shots=1024):
     size = 0
+
+    ordered_q = []
+
+    results = dict()
 
     if device == real_5:
         if n_qubits <= 5:
@@ -107,7 +97,7 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
     classical_r = Q_program.get_classical_register('cr')
 
     # create circuit needed for the envariance experiment
-    utility.envariance(circuit, quantum_r, classical_r, n_qubits)
+    utility.parity(circuit, quantum_r, classical_r, n_qubits, k=k, connected=ordered_q)
 
     QASM_source = Q_program.get_qasm("Circuit")
 
@@ -123,20 +113,29 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
 
     sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 
-    out_f = open(device + '_' + str(num_shots) + '_' + str(n_qubits) + '_qubits_envariance.txt', 'w')
+    out_f = open('Data_Oracle/' + device + '_' + str(num_shots) + 'queries_' + str(n_qubits) + 'qubits_' + k + '_oracle.txt', 'w')
 
     # store counts in txt file and xlsx file
     out_f.write('VALUES\t\tCOUNTS\n\n')
+    # print(ordered_q)
+    stop = math.floor((n_qubits)/2)
     for i in sorted_c:
-        out_f.write(i[0] + '\t' + str(i[1]) + '\n')
-
-    # out_f.write('\nCOUNTS\n\n')
-    # for i in sorted_c:
-    #     out_f.write(str(i[1]) + '\n')
+        reverse = i[0][::-1]
+        # print(reverse)
+        sorted_v = [reverse[ordered_q[0]]]
+        # print(ordered_q[0])
+        # print(sorted_v)
+        for n in range(stop):
+            sorted_v.append(reverse[ordered_q[n+1]])
+            # print(str(ordered_q[n+1]) + sorted_v[n+1] + '\n')
+            sorted_v.append(reverse[ordered_q[n+stop+1]])
+            # print(str(ordered_q[n+stop+1]) + sorted_v[n+2] + '\n')
+        value = ''.join(str(v) for v in sorted_v)
+        results.update({value: i[1]})
+        out_f.write(value + '\t' + str(i[1]) + '\n')
 
     out_f.close()
 
-    num_rows = len(sorted_c)
     sheet = str(num_shots) + '_' + str(n_qubits)
 
     worksheet = workbook.add_worksheet(sheet)
@@ -147,89 +146,61 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
     worksheet.write(0, 0, 'Values', bold)
     worksheet.write(0, 1, 'Counts', bold)
     worksheet.write(0, 2, 'Probability', bold)
-    worksheet.write(0, 3, 'Fidelity', bold)
+    worksheet.write(0, 3, 'Error', bold)
     row = 1
     col = 0
-    fidelity = 0
-    for i in sorted_c:
-        worksheet.write(row, col, i[0], binary)
-        worksheet.write(row, col + 1, int(i[1]))
-        worksheet.write(row, col + 2, int(i[1]) / num_shots)
-        if row == 1 or row == 2:
-            fidelity += math.sqrt(int(i[1]) / (2 * num_shots))
-        row += 1
-    worksheet.write(row, col + 1, '=SUM(B2:B' + str(row) + ')')
-    worksheet.write(1, 3, fidelity)
+    total = 0
+    correct = 0
+    zero = '0'
+    one = '1'
+    one_zero = '1'
+    one_one_zero = '1'
+    for i in range(math.floor(n_qubits/2)):
+        zero += '00'
+        one += '11'
+        one_zero += '00'
+        one_one_zero += '10'
 
-    chart = workbook.add_chart({'type': 'column'})
-    categories = '=' + sheet + '!$A$2:$A$' + str(num_rows + 1)
-    values = '=' + sheet + '!$C$2:$C$' + str(num_rows + 1)
-    chart.add_series({
-        'categories': categories,
-        'values': values,
-        'data_labels': {
-            'value': False,
-            'series_name': False,
-            'num_format': '0.#0',
-            'font': {'bold': True},
-        },
-    })
+    for i in results:
+        if i[0] != '0':
+            worksheet.write(row, col, i, binary)
+            worksheet.write(row, col + 1, results[i])
+            worksheet.write(row, col + 2, results[i] / num_shots)
+            total += results[i]
+            if i == one_zero and k == '00':
+                correct = results[i]
+            if i == one and k == '11':
+                correct = results[i]
+            if i == one_one_zero and k == '10':
+                correct = results[i]
+            row += 1
+    error = (1 - (correct/total))*100
 
-    chart.set_legend({
-        'none': True
-    })
-
-    chart.set_title({
-        'name': sheet + '_qubits_envariance'
-    })
-
-    chart.set_x_axis({
-        'num_font': {'rotation': 50},
-    })
-
-    worksheet.insert_chart('F3', chart)
+    worksheet.write(row, col + 1, total)
+    worksheet.write(1, 3, error)
 
 
-shots = [
-    1024,
-    2048,
-    8192
+shots = 200
+
+oracles = [
+    '00',
+    '10',
+    '11'
 ]
 
-# launch_exp takes the argument device wich can either be real_5, real_16, online_sim or local_sim
-
-workbook5 = xlsxwriter.Workbook('ibmqx2_n_qubits_envariance.xlsx')
-
-utility = Utility(coupling_map_5)
-for n_shots in shots:
-    launch_exp(workbook5, online_sim, utility, n_qubits=2, num_shots=n_shots)
-    time.sleep(2)
-    launch_exp(workbook5, online_sim, utility, n_qubits=3, num_shots=n_shots)
-    time.sleep(2)
-    launch_exp(workbook5, online_sim, utility, n_qubits=5, num_shots=n_shots)
-    time.sleep(2)
-
-utility.close()
-
-workbook5.close()
-
-workbook16 = xlsxwriter.Workbook('ibmqx3_n_qubits_envariance.xlsx')
+# launch_exp takes the argument device which can either be real_5, real_16, online_sim or local_sim
+# k is the srting you wont to learn: '10' for '10...10', '11' for '11...11', '00' for '00...00'
 
 utility = Utility(coupling_map_16)
-for n_shots in shots:
-    launch_exp(workbook16, online_sim, utility, n_qubits=2, num_shots=n_shots)
-    time.sleep(2)
-    launch_exp(workbook16, online_sim, utility, n_qubits=3, num_shots=n_shots)
-    time.sleep(2)
-    launch_exp(workbook16, online_sim, utility, n_qubits=5, num_shots=n_shots)
-    time.sleep(2)
-    launch_exp(workbook16, online_sim, utility, n_qubits=7, num_shots=n_shots)
-    time.sleep(2)
-    launch_exp(workbook16, online_sim, utility, n_qubits=9, num_shots=n_shots)
-    time.sleep(2)
+for k in oracles:
+    workbook = xlsxwriter.Workbook('Data_Oracle/ibmqx3_n_qubits_' + k + '_oracle.xlsx')
+    for n_shots in range(10, 210, 10):
+        launch_exp(workbook, online_sim, utility, n_qubits=7, k=k, num_shots=n_shots)
+        time.sleep(2)
+        launch_exp(workbook, online_sim, utility, n_qubits=9, k=k, num_shots=n_shots)
+        time.sleep(2)
+    workbook.close()
 
 utility.close()
-
-workbook16.close()
 
 print('\nAll done.\n')

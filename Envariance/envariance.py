@@ -14,12 +14,34 @@ import Qconfig
 from Envariance import Utility
 import operator
 import math
+import time
 import xlsxwriter
 
-# The coupling-map
-# coupling_map = {
-#
-# }
+coupling_map_5 = {
+    0: [1, 2],
+    1: [2],
+    2: [],
+    3: [2, 4],
+    4: [2],
+}
+
+coupling_map_16 = {
+    0: [1],
+    1: [2], 2: [3],
+    3: [14],
+    4: [3, 5],
+    5: [],
+    6: [7, 11],
+    7: [10],
+    8: [7],
+    9: [8, 10],
+    10: [],
+    11: [10],
+    12: [5, 11, 13],
+    13: [4, 14],
+    14: [],
+    15: [0, 14],
+}
 
 # Back-end devices
 real_5 = 'ibmqx2'
@@ -27,6 +49,8 @@ real_5 = 'ibmqx2'
 real_16 = 'ibmqx3'
 
 online_sim = 'ibmqx_qasm_simulator'
+
+local_sim = 'local_qasm_simulator'
 
 
 # launch envariance experiment on the given device
@@ -82,8 +106,8 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
     # get the Classical Register by Name
     classical_r = Q_program.get_classical_register('cr')
 
-    # crete circuit needed for the envariance experiment
-    utility.create(circuit, quantum_r, classical_r, n_qubits)
+    # create circuit needed for the envariance experiment
+    utility.envariance(circuit, quantum_r, classical_r, n_qubits)
 
     QASM_source = Q_program.get_qasm("Circuit")
 
@@ -99,7 +123,7 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
 
     sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 
-    out_f = open('Data_Envariance/' + device + '_' + str(num_shots) + '_' + str(n_qubits) + '_qubits_envariance.txt', 'w')
+    out_f = open(device + '_' + str(num_shots) + '_' + str(n_qubits) + '_qubits_envariance.txt', 'w')
 
     # store counts in txt file and xlsx file
     out_f.write('VALUES\t\tCOUNTS\n\n')
@@ -132,7 +156,7 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
         worksheet.write(row, col + 1, int(i[1]))
         worksheet.write(row, col + 2, int(i[1]) / num_shots)
         if row == 1 or row == 2:
-            fidelity += math.sqrt(int(i[1])/(2*num_shots))
+            fidelity += math.sqrt(int(i[1]) / (2 * num_shots))
         row += 1
     worksheet.write(row, col + 1, '=SUM(B2:B' + str(row) + ')')
     worksheet.write(1, 3, fidelity)
@@ -165,13 +189,47 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
 
     worksheet.insert_chart('F3', chart)
 
-#
-# Uncomment and fill in the missing data, refer to example.py if you have doubts
 
-# workbook = xlsxwriter.Workbook('Data_Envariance/your_file.xlsx')
-# utility = Utility('coupling_map')
-# launch_exp(workbook, 'back-end devie', utility, n_qubits=, num_shots=)
-# utility.close()
-# workbook.close()
+shots = [
+    1024,
+    2048,
+    8192
+]
+
+# launch_exp takes the argument device wich can either be real_5, real_16, online_sim or local_sim
+
+workbook5 = xlsxwriter.Workbook('ibmqx2_n_qubits_envariance.xlsx')
+
+utility = Utility(coupling_map_5)
+for n_shots in shots:
+    launch_exp(workbook5, online_sim, utility, n_qubits=2, num_shots=n_shots)
+    time.sleep(2)
+    launch_exp(workbook5, online_sim, utility, n_qubits=3, num_shots=n_shots)
+    time.sleep(2)
+    launch_exp(workbook5, online_sim, utility, n_qubits=5, num_shots=n_shots)
+    time.sleep(2)
+
+utility.close()
+
+workbook5.close()
+
+workbook16 = xlsxwriter.Workbook('ibmqx3_n_qubits_envariance.xlsx')
+
+utility = Utility(coupling_map_16)
+for n_shots in shots:
+    launch_exp(workbook16, online_sim, utility, n_qubits=2, num_shots=n_shots)
+    time.sleep(2)
+    launch_exp(workbook16, online_sim, utility, n_qubits=3, num_shots=n_shots)
+    time.sleep(2)
+    launch_exp(workbook16, online_sim, utility, n_qubits=5, num_shots=n_shots)
+    time.sleep(2)
+    launch_exp(workbook16, online_sim, utility, n_qubits=7, num_shots=n_shots)
+    time.sleep(2)
+    launch_exp(workbook16, online_sim, utility, n_qubits=9, num_shots=n_shots)
+    time.sleep(2)
+
+utility.close()
+
+workbook16.close()
 
 print('\nAll done.\n')
