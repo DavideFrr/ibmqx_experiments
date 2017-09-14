@@ -6,6 +6,7 @@ August 2017
 """
 
 import operator
+import  math
 
 
 class Utility(object):
@@ -101,14 +102,26 @@ class Utility(object):
                     if node not in to_connect:
                         to_connect.append(node)
                     count -= 1
+        print(self.__connected)
 
     # place cnot gates based on the path created in create_path method
-    def place_cx_(self, circuit, quantum_r):
-        for qubit in self.__connected:
-            if self.__connected[qubit] != -1:
-                circuit.cx(quantum_r[qubit], quantum_r[self.__connected[qubit]])
-                # place Hadamard gates
+    def place_cx_(self, circuit, quantum_r, k='11'):
+        if not k == '00':
+            print("k != 00\n")
+            stop = math.floor(self.__n_qubits/2)
+            for qubit in self.__connected:
+                if self.__connected[qubit] != -1:
+                    if k == '11':
+                        print("k = 11")
+                        circuit.cx(quantum_r[qubit], quantum_r[self.__connected[qubit]])
+                    elif k == '10':
+                        if stop > 0:
+                            circuit.cx(quantum_r[qubit], quantum_r[self.__connected[qubit]])
+                            stop -= 1
 
+
+
+    # place Hadamard gates
     def place_h(self, circuit, start, quantum_r, initial=True, x=True):
         for qubit in self.__connected:
             if qubit != start:
@@ -146,7 +159,7 @@ class Utility(object):
             circuit.measure(quantum_r[qubit], classical_r[qubit])
 
     # create the circuit
-    def create(self, circuit, quantum_r, classical_r, n_qubits, x=True):
+    def create(self, circuit, quantum_r, classical_r, n_qubits, x=True, k='11'):
 
         self.__n_qubits = n_qubits
 
@@ -171,16 +184,21 @@ class Utility(object):
         self.create_path(max_path[1], self.__inverse_coupling_map)
         # print(self.__connected)
         self.place_h(circuit, max_path[1], quantum_r, x=x)
-        self.place_cx_(circuit, quantum_r)
+        self.place_cx_(circuit, quantum_r, k=k)
         self.place_h(circuit, max_path[1], quantum_r, initial=False)
         if x is True:
             self.place_x(circuit, quantum_r)
         self.measure(circuit, quantum_r, classical_r)
-        self.__connected.clear()
-        self.__n_qubits = 0
 
     def envariance(self, circuit, quantum_r, classicla_r, n_qubits):
         self.create(circuit, quantum_r, classicla_r, n_qubits)
+        self.__connected.clear()
+        self.__n_qubits = 0
 
-    def oracle(self, circuit, quantum_r, classicla_r, n_qubits):
-        self.create(circuit, quantum_r, classicla_r, n_qubits, x=False)
+    def oracle(self, circuit, quantum_r, classicla_r, n_qubits, k='11', connected=[]):
+        self.create(circuit, quantum_r, classicla_r, n_qubits, x=False, k=k)
+        for i in self.__connected:
+            connected.append(i)
+        # print(connected)
+        self.__connected.clear()
+        self.__n_qubits = 0

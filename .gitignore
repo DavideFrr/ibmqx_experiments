@@ -150,3 +150,5 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 .idea/
+Envariance/Data_Oracle/*.txt
+Envariance/Data_Oracle/*.xlsx

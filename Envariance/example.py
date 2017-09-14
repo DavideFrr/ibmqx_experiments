@@ -123,7 +123,7 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
 
     sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 
-    out_f = open('Data/' + device + '_' + str(num_shots) + '_' + str(n_qubits) + '_qubits_envariance.txt', 'w')
+    out_f = open(device + '_' + str(num_shots) + '_' + str(n_qubits) + '_qubits_envariance.txt', 'w')
 
     # store counts in txt file and xlsx file
     out_f.write('VALUES\t\tCOUNTS\n\n')
@@ -198,34 +198,34 @@ shots = [
 
 # launch_exp takes the argument device wich can either be real_5, real_16, online_sim or local_sim
 
-workbook5 = xlsxwriter.Workbook('Data/ibmqx2_n_qubits_envariance.xlsx')
+workbook5 = xlsxwriter.Workbook('ibmqx2_n_qubits_envariance.xlsx')
 
 utility = Utility(coupling_map_5)
 for n_shots in shots:
-    launch_exp(workbook5, real_5, utility, n_qubits=2, num_shots=n_shots)
+    launch_exp(workbook5, online_sim, utility, n_qubits=2, num_shots=n_shots)
     time.sleep(2)
-    launch_exp(workbook5, real_5, utility, n_qubits=3, num_shots=n_shots)
+    launch_exp(workbook5, online_sim, utility, n_qubits=3, num_shots=n_shots)
     time.sleep(2)
-    launch_exp(workbook5, real_5, utility, n_qubits=5, num_shots=n_shots)
+    launch_exp(workbook5, online_sim, utility, n_qubits=5, num_shots=n_shots)
     time.sleep(2)
 
 utility.close()
 
 workbook5.close()
 
-workbook16 = xlsxwriter.Workbook('Data/ibmqx3_n_qubits_envariance.xlsx')
+workbook16 = xlsxwriter.Workbook('ibmqx3_n_qubits_envariance.xlsx')
 
 utility = Utility(coupling_map_16)
 for n_shots in shots:
-    launch_exp(workbook16, real_16, utility, n_qubits=2, num_shots=shots)
+    launch_exp(workbook16, online_sim, utility, n_qubits=2, num_shots=n_shots)
     time.sleep(2)
-    launch_exp(workbook16, real_16, utility, n_qubits=3, num_shots=n_shots)
+    launch_exp(workbook16, online_sim, utility, n_qubits=3, num_shots=n_shots)
     time.sleep(2)
-    launch_exp(workbook16, real_16, utility, n_qubits=5, num_shots=n_shots)
+    launch_exp(workbook16, online_sim, utility, n_qubits=5, num_shots=n_shots)
     time.sleep(2)
-    launch_exp(workbook16, real_16, utility, n_qubits=7, num_shots=n_shots)
+    launch_exp(workbook16, online_sim, utility, n_qubits=7, num_shots=n_shots)
     time.sleep(2)
-    launch_exp(workbook16, real_16, utility, n_qubits=9, num_shots=n_shots)
+    launch_exp(workbook16, online_sim, utility, n_qubits=9, num_shots=n_shots)
     time.sleep(2)
 
 utility.close()
