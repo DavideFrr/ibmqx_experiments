@@ -150,5 +150,6 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 .idea/
-Data_Oracle/*.txt
-Data_Oracle/*.xlsx
+OLD_README.md
+Data_Oracle/**.txt
+Data_Oracle/**.xlsx
