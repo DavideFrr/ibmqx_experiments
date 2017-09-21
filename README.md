@@ -29,6 +29,34 @@ to as many other qubits as possible. This is done in two main phases: first we i
 in the coupling map and than we explore all the possible paths from one qubit to another. The most connected
 is the one with the most number of paths to different qubits.
 
+_ibmqx3 coupling-map graphic rapresentation_:
+# ![ibmqx3_coupling-map](images/ibmqx3_coupling-map.png)
+
+_coupling-map python rapresentation_:
+```python
+coupling_map_16 = {
+    0: [1],
+    1: [2],    2: [3],
+    3: [14],
+    4: [3, 5],
+    5: [],
+    6: [7, 11],
+    7: [10],
+    8: [7],
+    9: [8, 10],
+    10: [],
+    11: [10],
+    12: [5, 11, 13],
+    13: [4, 14],
+    14: [],
+    15: [0, 14],
+}
+```
+
+
+Below the portion of the coupling-map selected by utility.py:
+# ![ibmqx3_envariance_coupling-map](images/ibmqx3_env_map.png)
+
 ## Envariance
 
 ... ...
