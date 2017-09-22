@@ -11,7 +11,7 @@ sys.path.append(  # solve the relative dependencies if you clone QISKit from the
 
 from qiskit import QuantumProgram
 import Qconfig
-from Envariance import Utility
+from utility import Utility
 import operator
 import math
 import time
