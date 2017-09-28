@@ -188,7 +188,7 @@ oracles = [
     '11'
 ]
 
-# launch_exp takes the argument device which can either be real_5, real_16, online_sim or local_sim
+# launch_exp takes the argument device which can either be qx2, qx3, online_sim or local_sim
 # k is the srting you wont to learn: '10' for '10...10', '11' for '11...11', '00' for '00...00'
 
 utility = Utility(coupling_map_16)

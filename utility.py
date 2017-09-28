@@ -10,19 +10,29 @@ import  math
 
 
 class Utility(object):
+    __coupling_map = dict()
     __inverse_coupling_map = dict()
+    __plain_map = dict()
     __from_all_to_all = dict()
     __connected = dict()
     __n_qubits = 0
 
     def __init__(self, coupling_map):
         if coupling_map:
+            self.__coupling_map = coupling_map.copy()
+            # print(self.__coupling_map)
             self.invert_graph(coupling_map, self.__inverse_coupling_map)
             # print(self.__inverse_coupling_map)
             for i in range(len(coupling_map)):
                 self.__from_all_to_all.update({i: [-1]})
                 self.__from_all_to_all[i][0] = dict()
-                # print(self.__from_all_to_all)
+            # print(self.__from_all_to_all)
+            for i in coupling_map:
+                self.__plain_map.update({i: coupling_map[i]})
+                for j in coupling_map:
+                    if i in coupling_map[j]:
+                        self.__plain_map[i] = self.__plain_map[i] + [j]
+            # print(self.__plain_map)
         else:
             print("Null argument")
             exit(1)
@@ -32,6 +42,7 @@ class Utility(object):
         self.__n_qubits = 0
         self.__from_all_to_all.clear()
         self.__inverse_coupling_map.clear()
+        self.__coupling_map.clear()
 
     # create an inverted coupling-map for further use
     @staticmethod
@@ -85,6 +96,7 @@ class Utility(object):
                     paths = self.find_all_paths(self.__inverse_coupling_map, start, end)
                     if len(paths) != 0:
                         self.__from_all_to_all[start][0][end] = paths
+        # print(self.__from_all_to_all)
 
     # create a valid path that connect qubits used in the circuit
     def create_path(self, start, graph):
@@ -102,21 +114,38 @@ class Utility(object):
                     if node not in to_connect:
                         to_connect.append(node)
                     count -= 1
-        print(self.__connected)
+        # print(self.__connected)
+
+    def cx(self, circuit, control_qubit, target_qubit, control, target):
+        if target in self.__coupling_map[control]:
+            # print('cnot: (' + str(control) + ', ' + str(self.__coupling_map[control]) + ')')
+            circuit.cx(control_qubit, target_qubit)
+        elif control in self.__coupling_map[target]:
+            # print('inverse-cnot: (' + str(control) + ', ' + str(target) + ')')
+            circuit.barrier()
+            circuit.h(control_qubit)
+            circuit.h(target_qubit)
+            circuit.cx(target_qubit, control_qubit)
+            circuit.h(control_qubit)
+            circuit.h(target_qubit)
+            circuit.barrier()
+        else:
+            print('Error: cannot connect qubit' + str(control) + ' to qubit ' + str(target))
+            exit(3)
 
     # place cnot gates based on the path created in create_path method
     def place_cx_(self, circuit, quantum_r, k='11'):
         if not k == '00':
-            print("k != 00\n")
+            # print("k != 00\n")
             stop = math.floor(self.__n_qubits/2)
             for qubit in self.__connected:
                 if self.__connected[qubit] != -1:
                     if k == '11':
-                        print("k = 11")
-                        circuit.cx(quantum_r[qubit], quantum_r[self.__connected[qubit]])
+                        # print("k = 11")
+                        self.cx(circuit, quantum_r[qubit], quantum_r[self.__connected[qubit]], qubit, self.__connected[qubit])
                     elif k == '10':
                         if stop > 0:
-                            circuit.cx(quantum_r[qubit], quantum_r[self.__connected[qubit]])
+                            self.cx(circuit, quantum_r[qubit], quantum_r[self.__connected[qubit]], qubit, self.__connected[qubit])
                             stop -= 1
 
 
@@ -137,7 +166,7 @@ class Utility(object):
     def place_x(self, circuit, quantum_r):
         # s_0 = math.floor(self.__n_qubits/2)
         sorted_c = sorted(self.__connected.items(), key=operator.itemgetter(0))
-        print(sorted_c)
+        # print(sorted_c)
         s_0 = self.__n_qubits // 2
         i = 0
         for qubit in sorted_c:
@@ -164,25 +193,15 @@ class Utility(object):
 
         self.__n_qubits = n_qubits
 
-        # for start in self.__inverse_coupling_map:
-        #     for end in self.__inverse_coupling_map:
-        #         if start != end:
-        #             paths = self.find_all_paths(self.__inverse_coupling_map, start, end)
-        #             if len(paths) != 0:
-        #                 self.__from_all_to_all[start][0][end] = paths
-
-        # for node in self.__from_all_to_all:
-        #     print('\n%d\n' % node)
-        #     print(self.__from_all_to_all[node])
-
         self.from_all_to_all()
 
         max_path = self.find_max(self.__from_all_to_all)
-        if max_path[0] + 1 < self.__n_qubits:
-            print('\nCan use only up to %s qubits' % str(max_path[0] + 1))
-            exit(2)
+        #TODO: find another way to check feasibility of circuit
+        # if max_path[0] + 1 < self.__n_qubits:
+        #     print('\nCan use only up to %s qubits' % str(max_path[0] + 1))
+        #     exit(2)
         # print(max_path)
-        self.create_path(max_path[1], self.__inverse_coupling_map)
+        self.create_path(max_path[1], self.__plain_map)
         # print(self.__connected)
         self.place_h(circuit, max_path[1], quantum_r, x=x)
         self.place_cx_(circuit, quantum_r, k=k)
