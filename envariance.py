@@ -109,14 +109,14 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
             size = 5
             # device = 'ibmqx_qasm_simulator'
         else:
-            logger.critical('Too much qubits for %s !', device)
+            logger.critical('launch_exp() - Too much qubits for %s !', device)
             exit(1)
     elif device == qx3 or device == qx5:
         if n_qubits <= 16:
             size = 16
             # device = 'ibmqx_qasm_simulator'
         else:
-            logger.critical('Too much qubits for %s !', device)
+            logger.critical('launch_exp() - Too much qubits for %s !', device)
             exit(2)
     elif device == online_sim:
         if n_qubits <= 5:
@@ -124,7 +124,7 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
         if n_qubits <= 16:
             size = 16
     else:
-        logger.critical('Unknown device.')
+        logger.critical('launch_exp() - Unknown device.')
         exit(3)
 
     Q_program = QuantumProgram()
@@ -141,13 +141,13 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
 
     QASM_source = Q_program.get_qasm("envariance")
 
-    logger.info(str(QASM_source))
+    logger.info('launch_exp() - QASM:\n%s', str(QASM_source))
 
     result = Q_program.execute(["envariance"], backend=device, wait=2, timeout=480, shots=1024, max_credits=10, silent=False)
 
     counts = result.get_counts("envariance")
 
-    logger.debug(str(counts))
+    logger.debug('launch_exp() - counts:\n%s', str(counts))
 
     sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 

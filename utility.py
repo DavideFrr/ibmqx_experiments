@@ -30,21 +30,21 @@ class Utility(object):
     def __init__(self, coupling_map):
         if coupling_map:
             self.__coupling_map = coupling_map.copy()
-            logger.log(VERBOSE, str(self.__coupling_map))
+            logger.log(VERBOSE, 'init() - coupling_map:\n%s', str(self.__coupling_map))
             self.invert_graph(coupling_map, self.__inverse_coupling_map)
-            logger.log(VERBOSE, str(self.__inverse_coupling_map))
+            logger.log(VERBOSE, 'init() - inverse coupling map:\n%s', str(self.__inverse_coupling_map))
             for i in range(len(coupling_map)):
                 self.__from_all_to_all.update({i: [-1]})
                 self.__from_all_to_all[i][0] = dict()
-            logger.log(VERBOSE, str(self.__from_all_to_all))
+            logger.log(VERBOSE, 'init() - from all to all:\n%s', str(self.__from_all_to_all))
             for i in coupling_map:
                 self.__plain_map.update({i: coupling_map[i]})
                 for j in coupling_map:
                     if i in coupling_map[j]:
                         self.__plain_map[i] = self.__plain_map[i] + [j]
-            logger.log(VERBOSE, str(self.__plain_map))
+            logger.log(VERBOSE, 'init() - plain map:\n%s', str(self.__plain_map))
         else:
-            logger.critical('Null argument: coupling_map')
+            logger.critical('init() - Null argument: coupling_map')
             exit(1)
 
     def close(self):
@@ -106,7 +106,7 @@ class Utility(object):
                     paths = self.find_all_paths(self.__inverse_coupling_map, start, end)
                     if len(paths) != 0:
                         self.__from_all_to_all[start][0][end] = paths
-        logger.log(VERBOSE, str(self.__from_all_to_all))
+        logger.log(VERBOSE, 'form_all_to_all() - from_all_to_all:\n%s', str(self.__from_all_to_all))
 
     # create a valid path that connect qubits used in the circuit
     def create_path(self, start, inverse_map, plain_map):
@@ -149,15 +149,15 @@ class Utility(object):
             #             self.__connected.update({node: visiting})
             #             changed = True
             #             count -= 1
-        logger.debug(str(self.__connected))
+        logger.debug('create_path() - connected:\n%s', str(self.__connected))
         return len(self.__connected)
 
     def cx(self, circuit, control_qubit, target_qubit, control, target):
         if target in self.__coupling_map[control]:
-            logger.debug('cnot: (%s, %s)', str(control), str(target))
+            logger.debug('cx() - cnot: (%s, %s)', str(control), str(target))
             circuit.cx(control_qubit, target_qubit)
         elif control in self.__coupling_map[target]:
-            logger.debug('inverse-cnot: (%s, %s)', str(control), str(target))
+            logger.debug('cx() - inverse-cnot: (%s, %s)', str(control), str(target))
             circuit.barrier()
             circuit.h(control_qubit)
             circuit.h(target_qubit)
@@ -166,21 +166,21 @@ class Utility(object):
             circuit.h(target_qubit)
             circuit.barrier()
         else:
-            logger.critical('Cannot connect qubit %s to qubit %s', str(control), str(target))
+            logger.critical('cx() - Cannot connect qubit %s to qubit %s', str(control), str(target))
             exit(3)
 
     # place cnot gates based on the path created in create_path method
     def place_cx_(self, circuit, quantum_r, k='11'):
         if not k == '00':
-            logger.log(VERBOSE, 'k != 00')
+            logger.log(VERBOSE, 'place_cx() - k != 00')
             stop = math.floor(self.__n_qubits/2)
             for qubit in self.__connected:
                 if self.__connected[qubit] != -1:
                     if k == '11':
-                        logger.log(VERBOSE, 'k = 11')
+                        logger.log(VERBOSE, 'place_cx() - k = 11')
                         self.cx(circuit, quantum_r[qubit], quantum_r[self.__connected[qubit]], qubit, self.__connected[qubit])
                     elif k == '10':
-                        logger.log(VERBOSE, 'k = 10')
+                        logger.log(VERBOSE, 'place_cx() - k = 10')
                         if stop > 0:
                             self.cx(circuit, quantum_r[qubit], quantum_r[self.__connected[qubit]], qubit, self.__connected[qubit])
                             stop -= 1
@@ -203,7 +203,7 @@ class Utility(object):
     def place_x(self, circuit, quantum_r):
         # s_0 = math.floor(self.__n_qubits/2)
         sorted_c = sorted(self.__connected.items(), key=operator.itemgetter(0))
-        logger.log(VERBOSE, str(sorted_c))
+        logger.log(VERBOSE, 'place_x() - place_x - sorted_c:\n%s', str(sorted_c))
         s_0 = self.__n_qubits // 2
         i = 0
         for qubit in sorted_c:
@@ -233,12 +233,12 @@ class Utility(object):
         self.from_all_to_all()
 
         max_path = self.find_max(self.__from_all_to_all)
-        logger.debug(str(max_path))
+        logger.debug('create() - max_path: %s', str(max_path))
         max_qubits = self.create_path(max_path[1], inverse_map=self.__inverse_coupling_map, plain_map=self.__plain_map)
-        logger.debug('N qubits: %s', str(self.__n_qubits))
-        logger.debug('Max qubits: %s', str(max_qubits))
+        logger.debug('create() - N qubits: %s', str(self.__n_qubits))
+        logger.debug('create() - Max qubits: %s', str(max_qubits))
         if max_qubits < self.__n_qubits:
-            logger.critical('Can use only up to %s qubits', str(max_qubits))
+            logger.critical('create() - Can use only up to %s qubits', str(max_qubits))
             exit(2)
         self.place_h(circuit, max_path[1], quantum_r, x=x)
         self.place_cx_(circuit, quantum_r, k=k)
@@ -256,6 +256,6 @@ class Utility(object):
         self.create(circuit, quantum_r, classicla_r, n_qubits, x=False, k=k)
         for i in self.__connected:
             connected.append(i)
-        logger.debug(str(connected))
+        logger.debug('parity() - connected:\n%s', str(connected))
         self.__connected.clear()
         self.__n_qubits = 0

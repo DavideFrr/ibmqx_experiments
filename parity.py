@@ -106,14 +106,14 @@ def launch_exp(workbook, device, utility, n_qubits, k='11', num_shots=1024):
             size = 5
             # device = 'ibmqx_qasm_simulator'
         else:
-            logger.critical('Too much qubits for %s !', device)
+            logger.critical('launch_exp() - Too much qubits for %s !', device)
             exit(1)
     elif device == qx3 or device == qx5:
         if n_qubits <= 16:
             size = 16
             # device = 'ibmqx_qasm_simulator'
         else:
-            logger.critical('Too much qubits for %s !', device)
+            logger.critical('launch_exp() - Too much qubits for %s !', device)
             exit(2)
     elif device == online_sim:
         if n_qubits <= 5:
@@ -121,7 +121,7 @@ def launch_exp(workbook, device, utility, n_qubits, k='11', num_shots=1024):
         if n_qubits <= 16:
             size = 16
     else:
-        logger.critical('Unknown device.')
+        logger.critical('launch_exp() - Unknown device.')
         exit(3)
 
     Q_program = QuantumProgram()
@@ -138,13 +138,13 @@ def launch_exp(workbook, device, utility, n_qubits, k='11', num_shots=1024):
 
     QASM_source = Q_program.get_qasm("parity")
 
-    logger.info(str(QASM_source))
+    logger.info('launch_exp() - QASM:\n%s', str(QASM_source))
 
     result = Q_program.execute(["parity"], backend=device, wait=2, timeout=480, shots=num_shots, max_credits=10, silent=False)
 
     counts = result.get_counts("parity")
 
-    logger.debug(str(counts))
+    logger.debug('launch_exp() - counts:\n%s', str(counts))
 
     sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 
@@ -154,19 +154,19 @@ def launch_exp(workbook, device, utility, n_qubits, k='11', num_shots=1024):
 
     # store counts in txt file and xlsx file
     out_f.write('VALUES\t\tCOUNTS\n\n')
-    logger.debug(str(ordered_q))
+    logger.debug('launch_exp() - oredred_q:\n%s', str(ordered_q))
     stop = math.floor((n_qubits)/2)
     for i in sorted_c:
         reverse = i[0][::-1]
-        logger.log(VERBOSE, str(reverse))
+        logger.log(VERBOSE, 'launch_exp() - reverse in for 1st loop: %s', str(reverse))
         sorted_v = [reverse[ordered_q[0]]]
-        logger.log(VERBOSE, str(ordered_q[0]))
-        logger.log(VERBOSE, str(sorted_v))
+        logger.log(VERBOSE, 'launch_exp() - oredred_q[0] in 1st for loop: %s', str(ordered_q[0]))
+        logger.log(VERBOSE, 'launch_exp() - sorted_v in 1st for loop: %s', str(sorted_v))
         for n in range(stop):
             sorted_v.append(reverse[ordered_q[n+1]])
-            logger.log(VERBOSE, '%s%s', str(ordered_q[n+1]), str(sorted_v[n+1]))
+            logger.log(VERBOSE, 'launch_exp() - ordered_q[n+1], sorted_v[n+1] in 2nd for loop: %s,%s', str(ordered_q[n+1]), str(sorted_v[n+1]))
             sorted_v.append(reverse[ordered_q[n+stop+1]])
-            logger.log(VERBOSE, '%s%s', str(ordered_q[n+stop+1]), str(sorted_v[n+2]))
+            logger.log(VERBOSE, 'launch_exp() - ordered_q[n+stop+1], sorted_v[n+2] in 2nd for loop: %s%s', str(ordered_q[n+stop+1]), str(sorted_v[n+2]))
         value = ''.join(str(v) for v in sorted_v)
         results.update({value: i[1]})
         out_f.write(value + '\t' + str(i[1]) + '\n')
