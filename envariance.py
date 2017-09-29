@@ -6,6 +6,10 @@ August 2017
 """
 import sys
 
+import logging
+
+import os
+
 sys.path.append(  # solve the relative dependencies if you clone QISKit from the Git repo and use like a global.
     "D:/PyCharm/qiskit-sdk-py")
 
@@ -16,6 +20,17 @@ import operator
 import math
 import time
 import xlsxwriter
+
+
+logger = logging.getLogger('envariance')
+logger.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+logger.propagate = False
+
 
 coupling_map_qx2 = {
     0: [1, 2],
@@ -94,14 +109,14 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
             size = 5
             # device = 'ibmqx_qasm_simulator'
         else:
-            print('Too much qubits for' + device + '!')
+            logger.critical('Too much qubits for %s !', device)
             exit(1)
     elif device == qx3 or device == qx5:
         if n_qubits <= 16:
             size = 16
             # device = 'ibmqx_qasm_simulator'
         else:
-            print('Too much qubits for' + device + '!')
+            logger.critical('Too much qubits for %s !', device)
             exit(2)
     elif device == online_sim:
         if n_qubits <= 5:
@@ -109,7 +124,7 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
         if n_qubits <= 16:
             size = 16
     else:
-        print('Unknown device.')
+        logger.critical('Unknown device.')
         exit(3)
 
     Q_program = QuantumProgram()
@@ -126,17 +141,20 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
 
     QASM_source = Q_program.get_qasm("envariance")
 
-    print(QASM_source)
+    logger.info(str(QASM_source))
 
     result = Q_program.execute(["envariance"], backend=device, wait=2, timeout=480, shots=1024, max_credits=10, silent=False)
 
     counts = result.get_counts("envariance")
 
-    print(counts)
+    logger.debug(str(counts))
 
     sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 
-    out_f = open('Data_Envariance/' + device + '/' + device + '_' + str(num_shots) + '_' + str(n_qubits) + '_qubits_envariance.txt', 'w')
+    filename = 'Data_Envariance/' + device + '/' + device + '_' + str(num_shots) + '_' + str(
+        n_qubits) + '_qubits_envariance.txt'
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    out_f = open(filename, 'w')
 
     # store counts in txt file and xlsx file
     out_f.write('VALUES\t\tCOUNTS\n\n')
@@ -198,7 +216,6 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
 
     worksheet.insert_chart('F3', chart)
 
-
 shots = [
     1024,
     2048,
@@ -206,39 +223,48 @@ shots = [
 ]
 
 # launch_exp takes the argument device which can either be qx2, qx3, qx4, qx5, online_sim or local_sim
+logger.info('Started')
 
-# workbook5 = xlsxwriter.Workbook('Data_Envariance/ibmqx4_n_qubits_envariance.xlsx')
-#
-# utility = Utility(coupling_map_qx4)
-# for n_shots in shots:
-#     launch_exp(workbook5, qx4, utility, n_qubits=2, num_shots=n_shots)
-#     time.sleep(2)
-#     launch_exp(workbook5, qx4, utility, n_qubits=3, num_shots=n_shots)
-#     time.sleep(2)
-#     launch_exp(workbook5, qx4, utility, n_qubits=5, num_shots=n_shots)
-#     time.sleep(2)
-#
-# utility.close()
-#
-# workbook5.close()
+directory = 'Data_Envariance/'
+os.makedirs(os.path.dirname(directory), exist_ok=True)
+workbook5 = xlsxwriter.Workbook(directory + 'ibmqx4_n_qubits_envariance.xlsx')
 
-workbook16 = xlsxwriter.Workbook('Data_Envariance/ibmqx5_n_qubits_envariance.xlsx')
+utility = Utility(coupling_map_qx4)
+for n_shots in shots:
+    launch_exp(workbook5, qx4, utility, n_qubits=2, num_shots=n_shots)
+    time.sleep(2)
+    launch_exp(workbook5, qx4, utility, n_qubits=3, num_shots=n_shots)
+    time.sleep(2)
+    launch_exp(workbook5, qx4, utility, n_qubits=5, num_shots=n_shots)
+    time.sleep(2)
+
+utility.close()
+
+workbook5.close()
+
+workbook16 = xlsxwriter.Workbook(directory + 'ibmqx5_n_qubits_envariance.xlsx')
 
 utility = Utility(coupling_map_qx5)
 for n_shots in shots:
-    # launch_exp(workbook16, qx5, utility, n_qubits=2, num_shots=n_shots)
-    # time.sleep(2)
-    # launch_exp(workbook16, qx5, utility, n_qubits=3, num_shots=n_shots)
-    # time.sleep(2)
+    launch_exp(workbook16, qx5, utility, n_qubits=2, num_shots=n_shots)
+    time.sleep(2)
+    launch_exp(workbook16, qx5, utility, n_qubits=3, num_shots=n_shots)
+    time.sleep(2)
     launch_exp(workbook16, qx5, utility, n_qubits=5, num_shots=n_shots)
     time.sleep(2)
-    # launch_exp(workbook16, qx5, utility, n_qubits=7, num_shots=n_shots)
-    # time.sleep(2)
-    # launch_exp(workbook16, qx5, utility, n_qubits=9, num_shots=n_shots)
-    # time.sleep(2)
+    launch_exp(workbook16, qx5, utility, n_qubits=7, num_shots=n_shots)
+    time.sleep(2)
+    launch_exp(workbook16, qx5, utility, n_qubits=9, num_shots=n_shots)
+    time.sleep(2)
+    launch_exp(workbook16, qx5, utility, n_qubits=12, num_shots=n_shots)
+    time.sleep(2)
+    launch_exp(workbook16, qx5, utility, n_qubits=14, num_shots=n_shots)
+    time.sleep(2)
+    launch_exp(workbook16, qx5, utility, n_qubits=16, num_shots=n_shots)
+    time.sleep(2)
 
 utility.close()
 
 workbook16.close()
 
-print('\nAll done.\n')
+logger.info('All done.')

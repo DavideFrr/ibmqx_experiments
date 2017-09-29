@@ -1,5 +1,9 @@
 import sys
 
+import  logging
+
+import  os
+
 sys.path.append(  # solve the relative dependencies if you clone QISKit from the Git repo and use like a global.
     "D:/PyCharm/qiskit-sdk-py")
 
@@ -11,9 +15,28 @@ import math
 import xlsxwriter
 import time
 
-coupling_map_16 = {
+VERBOSE = 5
+logger = logging.getLogger('parity')
+logger.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+logger.propagate = False
+
+coupling_map_qx2 = {
+    0: [1, 2],
+    1: [2],
+    2: [],
+    3: [2, 4],
+    4: [2],
+}
+
+coupling_map_qx3 = {
     0: [1],
-    1: [2], 2: [3],
+    1: [2],
+    2: [3],
     3: [14],
     4: [3, 5],
     5: [],
@@ -29,10 +52,41 @@ coupling_map_16 = {
     15: [0, 14],
 }
 
-# Back-end devices
-real_5 = 'ibmqx2'
+coupling_map_qx4 = {
+    0: [],
+    1: [0],
+    2: [0, 1, 4],
+    3: [2, 4],
+    4: [],
+}
 
-real_16 = 'ibmqx3'
+coupling_map_qx5 = {
+    0: [],
+    1: [0, 2],
+    2: [3],
+    3: [4, 14],
+    4: [],
+    5: [4],
+    6: [5, 7, 11],
+    7: [10],
+    8: [7],
+    9: [8, 10],
+    10: [],
+    11: [10],
+    12: [5, 11, 13],
+    13: [4, 14],
+    14: [],
+    15: [0, 2, 14],
+}
+
+# Back-end devices
+qx2 = 'ibmqx2'
+
+qx3 = 'ibmqx3'
+
+qx4 = 'ibmqx4'
+
+qx5 = 'ibmqx5'
 
 online_sim = 'ibmqx_qasm_simulator'
 
@@ -47,19 +101,19 @@ def launch_exp(workbook, device, utility, n_qubits, k='11', num_shots=1024):
 
     results = dict()
 
-    if device == real_5:
+    if device == qx2 or device == qx4:
         if n_qubits <= 5:
             size = 5
             # device = 'ibmqx_qasm_simulator'
         else:
-            print('Too much qubits for' + device + '!')
+            logger.critical('Too much qubits for %s !', device)
             exit(1)
-    elif device == real_16:
+    elif device == qx3 or device == qx5:
         if n_qubits <= 16:
             size = 16
             # device = 'ibmqx_qasm_simulator'
         else:
-            print('Too much qubits for' + device + '!')
+            logger.critical('Too much qubits for %s !', device)
             exit(2)
     elif device == online_sim:
         if n_qubits <= 5:
@@ -67,69 +121,52 @@ def launch_exp(workbook, device, utility, n_qubits, k='11', num_shots=1024):
         if n_qubits <= 16:
             size = 16
     else:
-        print('Unknown device.')
+        logger.critical('Unknown device.')
         exit(3)
 
-    Q_SPECS = {
-        "circuits": [{
-            "name": "Circuit",
-            "quantum_registers": [{
-                "name": "qr",
-                "size": size
-            }],
-            "classical_registers": [{
-                "name": "cr",
-                "size": size
-            }]}],
-    }
-
-    Q_program = QuantumProgram(specs=Q_SPECS)
-
-    # Get the components.
-
-    # get the circuit by Name
-    circuit = Q_program.get_circuit("Circuit")
-
-    # get the Quantum Register by Name
-    quantum_r = Q_program.get_quantum_register("qr")
-
-    # get the Classical Register by Name
-    classical_r = Q_program.get_classical_register('cr')
-
-    # create circuit needed for the envariance experiment
-    utility.parity(circuit, quantum_r, classical_r, n_qubits, k=k, connected=ordered_q)
-
-    QASM_source = Q_program.get_qasm("Circuit")
-
-    print(QASM_source)
-
-    circuits = ["Circuit"]  # Group of circuits to execute
+    Q_program = QuantumProgram()
 
     Q_program.set_api(Qconfig.APItoken, Qconfig.config["url"])  # set the APIToken and API url
 
-    result = Q_program.execute(circuits, device, wait=2, timeout=480, shots=num_shots, max_credits=10, silent=False)
+    quantum_r = Q_program.create_quantum_register("qr", size)
 
-    counts = result.get_counts("Circuit")
+    classical_r = Q_program.create_classical_register("cr", size)
+
+    circuit = Q_program.create_circuit("parity", [quantum_r], [classical_r])
+
+    utility.parity(circuit=circuit, quantum_r=quantum_r, classicla_r=classical_r, n_qubits=n_qubits, k=k, connected=ordered_q)
+
+    QASM_source = Q_program.get_qasm("parity")
+
+    logger.info(str(QASM_source))
+
+    result = Q_program.execute(["parity"], backend=device, wait=2, timeout=480, shots=num_shots, max_credits=10, silent=False)
+
+    counts = result.get_counts("parity")
+
+    logger.debug(str(counts))
 
     sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 
-    out_f = open('Data_Oracle/' + device + '_' + str(num_shots) + 'queries_' + str(n_qubits) + 'qubits_' + k + '_oracle.txt', 'w')
+    filename = 'Data_Parity/' + device + '/' + device + '_' + str(num_shots) + 'queries_' + str(n_qubits) + '_qubits_parity.txt'
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    out_f = open(filename, 'w')
 
     # store counts in txt file and xlsx file
     out_f.write('VALUES\t\tCOUNTS\n\n')
-    # print(ordered_q)
+    logger.debug(str(ordered_q))
     stop = math.floor((n_qubits)/2)
     for i in sorted_c:
         reverse = i[0][::-1]
-        # print(reverse)
+        logger.log(VERBOSE, str(reverse))
         sorted_v = [reverse[ordered_q[0]]]
-        # print(ordered_q[0])
-        # print(sorted_v)
+        logger.log(VERBOSE, str(ordered_q[0]))
+        logger.log(VERBOSE, str(sorted_v))
         for n in range(stop):
             sorted_v.append(reverse[ordered_q[n+1]])
-            # print(str(ordered_q[n+1]) + sorted_v[n+1] + '\n')
+            logger.log(VERBOSE, '%s%s', str(ordered_q[n+1]), str(sorted_v[n+1]))
             sorted_v.append(reverse[ordered_q[n+stop+1]])
-            # print(str(ordered_q[n+stop+1]) + sorted_v[n+2] + '\n')
+            logger.log(VERBOSE, '%s%s', str(ordered_q[n+stop+1]), str(sorted_v[n+2]))
         value = ''.join(str(v) for v in sorted_v)
         results.update({value: i[1]})
         out_f.write(value + '\t' + str(i[1]) + '\n')
@@ -190,17 +227,31 @@ oracles = [
 
 # launch_exp takes the argument device which can either be qx2, qx3, online_sim or local_sim
 # k is the srting you wont to learn: '10' for '10...10', '11' for '11...11', '00' for '00...00'
+logger.info('Started')
 
-utility = Utility(coupling_map_16)
+utility = Utility(coupling_map_qx5)
+directory = 'Data_Parity/'
+os.makedirs(os.path.dirname(directory), exist_ok=True)
+
 for k in oracles:
-    workbook = xlsxwriter.Workbook('Data_Oracle/ibmqx3_n_qubits_' + k + '_oracle.xlsx')
+    workbook = xlsxwriter.Workbook(directory + 'ibmqx5_n_qubits_' + k + '_parity.xlsx')
     for n_shots in range(10, 210, 10):
+        launch_exp(workbook, online_sim, utility, n_qubits=3, k=k, num_shots=n_shots)
+        time.sleep(2)
+        launch_exp(workbook, online_sim, utility, n_qubits=5, k=k, num_shots=n_shots)
+        time.sleep(2)
         launch_exp(workbook, online_sim, utility, n_qubits=7, k=k, num_shots=n_shots)
         time.sleep(2)
         launch_exp(workbook, online_sim, utility, n_qubits=9, k=k, num_shots=n_shots)
+        time.sleep(2)
+        launch_exp(workbook, online_sim, utility, n_qubits=12, k=k, num_shots=n_shots)
+        time.sleep(2)
+        launch_exp(workbook, online_sim, utility, n_qubits=14, k=k, num_shots=n_shots)
+        time.sleep(2)
+        launch_exp(workbook, online_sim, utility, n_qubits=16, k=k, num_shots=n_shots)
         time.sleep(2)
     workbook.close()
 
 utility.close()
 
-print('\nAll done.\n')
+logger.info('All done.')
