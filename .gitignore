@@ -153,3 +153,4 @@ fabric.properties
 OLD_README.md
 Data_Oracle/**.txt
 Data_Oracle/**.xlsx
+ibmqx4_test.py
