@@ -94,7 +94,7 @@ local_sim = 'local_qasm_simulator'
 
 
 # launch envariance experiment on the given device
-def launch_exp(workbook, device, utility, n_qubits, k='11', num_shots=1024):
+def launch_exp(workbook, device, utility, n_qubits, oracle='11', num_shots=1024):
     size = 0
 
     ordered_q = []
@@ -134,7 +134,7 @@ def launch_exp(workbook, device, utility, n_qubits, k='11', num_shots=1024):
 
     circuit = Q_program.create_circuit("parity", [quantum_r], [classical_r])
 
-    utility.parity(circuit=circuit, quantum_r=quantum_r, classicla_r=classical_r, n_qubits=n_qubits, k=k, connected=ordered_q)
+    utility.parity(circuit=circuit, quantum_r=quantum_r, classicla_r=classical_r, n_qubits=n_qubits, oracle=oracle, connected=ordered_q)
 
     QASM_source = Q_program.get_qasm("parity")
 
@@ -204,11 +204,11 @@ def launch_exp(workbook, device, utility, n_qubits, k='11', num_shots=1024):
             worksheet.write(row, col + 1, results[i])
             worksheet.write(row, col + 2, results[i] / num_shots)
             total += results[i]
-            if i == one_zero and k == '00':
+            if i == one_zero and oracle == '00':
                 correct = results[i]
-            if i == one and k == '11':
+            if i == one and oracle == '11':
                 correct = results[i]
-            if i == one_one_zero and k == '10':
+            if i == one_one_zero and oracle == '10':
                 correct = results[i]
             row += 1
     error = (1 - (correct/total))*100
@@ -226,29 +226,29 @@ oracles = [
 ]
 
 # launch_exp takes the argument device which can either be qx2, qx3, online_sim or local_sim
-# k is the srting you wont to learn: '10' for '10...10', '11' for '11...11', '00' for '00...00'
+# oracle is the srting you wont to learn: '10' for '10...10', '11' for '11...11', '00' for '00...00'
 logger.info('Started')
 
 utility = Utility(coupling_map_qx5)
 directory = 'Data_Parity/'
 os.makedirs(os.path.dirname(directory), exist_ok=True)
 
-for k in oracles:
-    workbook = xlsxwriter.Workbook(directory + 'ibmqx5_n_qubits_' + k + '_parity.xlsx')
+for oracle in oracles:
+    workbook = xlsxwriter.Workbook(directory + 'ibmqx5_n_qubits_' + oracle + '_parity.xlsx')
     for n_shots in range(10, 210, 10):
-        launch_exp(workbook, online_sim, utility, n_qubits=3, k=k, num_shots=n_shots)
+        launch_exp(workbook, online_sim, utility, n_qubits=3, oracle=oracle, num_shots=n_shots)
         time.sleep(2)
-        launch_exp(workbook, online_sim, utility, n_qubits=5, k=k, num_shots=n_shots)
+        launch_exp(workbook, online_sim, utility, n_qubits=5, oracle=oracle, num_shots=n_shots)
         time.sleep(2)
-        launch_exp(workbook, online_sim, utility, n_qubits=7, k=k, num_shots=n_shots)
+        launch_exp(workbook, online_sim, utility, n_qubits=7, oracle=oracle, num_shots=n_shots)
         time.sleep(2)
-        launch_exp(workbook, online_sim, utility, n_qubits=9, k=k, num_shots=n_shots)
+        launch_exp(workbook, online_sim, utility, n_qubits=9, oracle=oracle, num_shots=n_shots)
         time.sleep(2)
-        launch_exp(workbook, online_sim, utility, n_qubits=12, k=k, num_shots=n_shots)
+        launch_exp(workbook, online_sim, utility, n_qubits=12, oracle=oracle, num_shots=n_shots)
         time.sleep(2)
-        launch_exp(workbook, online_sim, utility, n_qubits=14, k=k, num_shots=n_shots)
+        launch_exp(workbook, online_sim, utility, n_qubits=14, oracle=oracle, num_shots=n_shots)
         time.sleep(2)
-        launch_exp(workbook, online_sim, utility, n_qubits=16, k=k, num_shots=n_shots)
+        launch_exp(workbook, online_sim, utility, n_qubits=16, oracle=oracle, num_shots=n_shots)
         time.sleep(2)
     workbook.close()
 

@@ -143,7 +143,7 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
 
     logger.info('launch_exp() - QASM:\n%s', str(QASM_source))
 
-    result = Q_program.execute(["envariance"], backend=device, wait=2, timeout=480, shots=1024, max_credits=10, silent=False)
+    result = Q_program.execute(["envariance"], backend=device, wait=2, timeout=480, shots=num_shots, max_credits=10, silent=False)
 
     counts = result.get_counts("envariance")
 
@@ -180,10 +180,10 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
     fidelity = 0
     for i in sorted_c:
         worksheet.write(row, col, i[0], binary)
-        worksheet.write(row, col + 1, int(i[1]))
-        worksheet.write(row, col + 2, int(i[1]) / num_shots)
+        worksheet.write(row, col + 1, i[1])
+        worksheet.write(row, col + 2, i[1] / num_shots)
         if row == 1 or row == 2:
-            fidelity += math.sqrt(int(i[1]) / (2 * num_shots))
+            fidelity += math.sqrt(i[1] / (2 * num_shots))
         row += 1
     worksheet.write(row, col + 1, '=SUM(B2:B' + str(row) + ')')
     worksheet.write(1, 3, fidelity)

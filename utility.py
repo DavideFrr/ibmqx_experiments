@@ -170,17 +170,17 @@ class Utility(object):
             exit(3)
 
     # place cnot gates based on the path created in create_path method
-    def place_cx_(self, circuit, quantum_r, k='11'):
-        if not k == '00':
-            logger.log(VERBOSE, 'place_cx() - k != 00')
+    def place_cx_(self, circuit, quantum_r, oracle='11'):
+        if not oracle == '00':
+            logger.log(VERBOSE, 'place_cx() - oracle != 00')
             stop = math.floor(self.__n_qubits/2)
             for qubit in self.__connected:
                 if self.__connected[qubit] != -1:
-                    if k == '11':
-                        logger.log(VERBOSE, 'place_cx() - k = 11')
+                    if oracle == '11':
+                        logger.log(VERBOSE, 'place_cx() - oracle = 11')
                         self.cx(circuit, quantum_r[qubit], quantum_r[self.__connected[qubit]], qubit, self.__connected[qubit])
-                    elif k == '10':
-                        logger.log(VERBOSE, 'place_cx() - k = 10')
+                    elif oracle == '10':
+                        logger.log(VERBOSE, 'place_cx() - oracle = 10')
                         if stop > 0:
                             self.cx(circuit, quantum_r[qubit], quantum_r[self.__connected[qubit]], qubit, self.__connected[qubit])
                             stop -= 1
@@ -226,7 +226,7 @@ class Utility(object):
             circuit.measure(quantum_r[qubit], classical_r[qubit])
 
     # create the circuit
-    def create(self, circuit, quantum_r, classical_r, n_qubits, x=True, k='11'):
+    def create(self, circuit, quantum_r, classical_r, n_qubits, x=True, oracle='11'):
 
         self.__n_qubits = n_qubits
 
@@ -241,7 +241,7 @@ class Utility(object):
             logger.critical('create() - Can use only up to %s qubits', str(max_qubits))
             exit(2)
         self.place_h(circuit, max_path[1], quantum_r, x=x)
-        self.place_cx_(circuit, quantum_r, k=k)
+        self.place_cx_(circuit, quantum_r, oracle=oracle)
         self.place_h(circuit, max_path[1], quantum_r, initial=False)
         if x is True:
             self.place_x(circuit, quantum_r)
@@ -252,8 +252,8 @@ class Utility(object):
         self.__connected.clear()
         self.__n_qubits = 0
 
-    def parity(self, circuit, quantum_r, classicla_r, n_qubits, k='11', connected=[]):
-        self.create(circuit, quantum_r, classicla_r, n_qubits, x=False, k=k)
+    def parity(self, circuit, quantum_r, classicla_r, n_qubits, oracle='11', connected=[]):
+        self.create(circuit, quantum_r, classicla_r, n_qubits, x=False, oracle=oracle)
         for i in self.__connected:
             connected.append(i)
         logger.debug('parity() - connected:\n%s', str(connected))
