@@ -23,7 +23,7 @@ import xlsxwriter
 
 
 logger = logging.getLogger('envariance')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')

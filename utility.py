@@ -11,7 +11,7 @@ import math
 
 VERBOSE = 5
 logger = logging.getLogger('utility')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.CRITICAL)
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')

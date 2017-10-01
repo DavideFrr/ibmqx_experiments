@@ -17,7 +17,7 @@ import time
 
 VERBOSE = 5
 logger = logging.getLogger('parity')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
@@ -235,7 +235,7 @@ os.makedirs(os.path.dirname(directory), exist_ok=True)
 
 for oracle in oracles:
     workbook = xlsxwriter.Workbook(directory + 'ibmqx5_n_qubits_' + oracle + '_parity.xlsx')
-    for n_shots in range(10, 210, 10):
+    for n_shots in range(10, (shots+10), 10):
         launch_exp(workbook, online_sim, utility, n_qubits=3, oracle=oracle, num_shots=n_shots)
         time.sleep(2)
         launch_exp(workbook, online_sim, utility, n_qubits=5, oracle=oracle, num_shots=n_shots)
