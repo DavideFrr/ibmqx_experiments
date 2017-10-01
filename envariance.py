@@ -4,22 +4,23 @@ Author: Davide Ferrari
 August 2017
 
 """
-import sys
+
 
 import logging
-
 import os
+import operator
+import xlsxwriter
+import time
+import math
 
+from utility import Utility
+
+import sys
 sys.path.append(  # solve the relative dependencies if you clone QISKit from the Git repo and use like a global.
     "D:/PyCharm/qiskit-sdk-py")
 
 from qiskit import QuantumProgram
 import Qconfig
-from utility import Utility
-import operator
-import math
-import time
-import xlsxwriter
 
 
 logger = logging.getLogger('envariance')

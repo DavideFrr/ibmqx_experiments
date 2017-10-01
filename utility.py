@@ -5,9 +5,9 @@ August 2017
 
 """
 
+
 import logging
 import operator
-import math
 
 VERBOSE = 5
 logger = logging.getLogger('utility')
@@ -18,6 +18,7 @@ formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 logger.propagate = False
+
 
 class Utility(object):
     __coupling_map = dict()
@@ -138,17 +139,17 @@ class Utility(object):
                         if node not in to_connect:
                             to_connect.append(node)
                         count -= 1
-            # iterable = copy.deepcopy(self.__connected)
-            # for visiting in iterable:
-            #     if count <= 0:
-            #         break
-            #     for node in plain_map[visiting]:
-            #         if count <= 0:
-            #             break
-            #         if node not in iterable:
-            #             self.__connected.update({node: visiting})
-            #             changed = True
-            #             count -= 1
+                        # iterable = copy.deepcopy(self.__connected)
+                        # for visiting in iterable:
+                        #     if count <= 0:
+                        #         break
+                        #     for node in plain_map[visiting]:
+                        #         if count <= 0:
+                        #             break
+                        #         if node not in iterable:
+                        #             self.__connected.update({node: visiting})
+                        #             changed = True
+                        #             count -= 1
         logger.debug('create_path() - connected:\n%s', str(self.__connected))
         return len(self.__connected)
 
@@ -173,19 +174,19 @@ class Utility(object):
     def place_cx_(self, circuit, quantum_r, oracle='11'):
         if not oracle == '00':
             logger.log(VERBOSE, 'place_cx() - oracle != 00')
-            stop = math.floor(self.__n_qubits/2)
+            stop = self.__n_qubits // 2
             for qubit in self.__connected:
                 if self.__connected[qubit] != -1:
                     if oracle == '11':
                         logger.log(VERBOSE, 'place_cx() - oracle = 11')
-                        self.cx(circuit, quantum_r[qubit], quantum_r[self.__connected[qubit]], qubit, self.__connected[qubit])
+                        self.cx(circuit, quantum_r[qubit], quantum_r[self.__connected[qubit]], qubit,
+                                self.__connected[qubit])
                     elif oracle == '10':
                         logger.log(VERBOSE, 'place_cx() - oracle = 10')
                         if stop > 0:
-                            self.cx(circuit, quantum_r[qubit], quantum_r[self.__connected[qubit]], qubit, self.__connected[qubit])
+                            self.cx(circuit, quantum_r[qubit], quantum_r[self.__connected[qubit]], qubit,
+                                    self.__connected[qubit])
                             stop -= 1
-
-
 
     # place Hadamard gates
     def place_h(self, circuit, start, quantum_r, initial=True, x=True):
@@ -252,7 +253,9 @@ class Utility(object):
         self.__connected.clear()
         self.__n_qubits = 0
 
-    def parity(self, circuit, quantum_r, classicla_r, n_qubits, oracle='11', connected=[]):
+    def parity(self, circuit, quantum_r, classicla_r, n_qubits, oracle='11', connected=None):
+        if connected is None:
+            connected = []
         self.create(circuit, quantum_r, classicla_r, n_qubits, x=False, oracle=oracle)
         for i in self.__connected:
             connected.append(i)

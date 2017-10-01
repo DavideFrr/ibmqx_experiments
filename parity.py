@@ -1,19 +1,27 @@
+"""
+
+Author: Davide Ferrari
+August 2017
+
+"""
+
+
+import logging
+import os
+import operator
+import xlsxwriter
+import time
+
+from utility import Utility
+
 import sys
-
-import  logging
-
-import  os
 
 sys.path.append(  # solve the relative dependencies if you clone QISKit from the Git repo and use like a global.
     "D:/PyCharm/qiskit-sdk-py")
 
-from qiskit import QuantumProgram
 import Qconfig
-from utility import Utility
-import operator
-import math
-import xlsxwriter
-import time
+from qiskit import QuantumProgram
+
 
 VERBOSE = 5
 logger = logging.getLogger('parity')
@@ -134,13 +142,15 @@ def launch_exp(workbook, device, utility, n_qubits, oracle='11', num_shots=1024)
 
     circuit = Q_program.create_circuit("parity", [quantum_r], [classical_r])
 
-    utility.parity(circuit=circuit, quantum_r=quantum_r, classicla_r=classical_r, n_qubits=n_qubits, oracle=oracle, connected=ordered_q)
+    utility.parity(circuit=circuit, quantum_r=quantum_r, classicla_r=classical_r, n_qubits=n_qubits, oracle=oracle,
+                   connected=ordered_q)
 
     QASM_source = Q_program.get_qasm("parity")
 
     logger.info('launch_exp() - QASM:\n%s', str(QASM_source))
 
-    result = Q_program.execute(["parity"], backend=device, wait=2, timeout=480, shots=num_shots, max_credits=10, silent=False)
+    result = Q_program.execute(["parity"], backend=device, wait=2, timeout=480, shots=num_shots, max_credits=10,
+                               silent=False)
 
     counts = result.get_counts("parity")
 
@@ -148,14 +158,15 @@ def launch_exp(workbook, device, utility, n_qubits, oracle='11', num_shots=1024)
 
     sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 
-    filename = 'Data_Parity/' + device + '/' + device + '_' + str(num_shots) + 'queries_' + str(n_qubits) + '_qubits_parity.txt'
+    filename = 'Data_Parity/' + device + '/' + device + '_' + str(num_shots) + 'queries_' + str(
+        n_qubits) + '_qubits_parity.txt'
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     out_f = open(filename, 'w')
 
     # store counts in txt file and xlsx file
     out_f.write('VALUES\t\tCOUNTS\n\n')
     logger.debug('launch_exp() - oredred_q:\n%s', str(ordered_q))
-    stop = math.floor((n_qubits)/2)
+    stop = n_qubits // 2
     for i in sorted_c:
         reverse = i[0][::-1]
         logger.log(VERBOSE, 'launch_exp() - reverse in for 1st loop: %s', str(reverse))
@@ -163,10 +174,12 @@ def launch_exp(workbook, device, utility, n_qubits, oracle='11', num_shots=1024)
         logger.log(VERBOSE, 'launch_exp() - oredred_q[0] in 1st for loop: %s', str(ordered_q[0]))
         logger.log(VERBOSE, 'launch_exp() - sorted_v in 1st for loop: %s', str(sorted_v))
         for n in range(stop):
-            sorted_v.append(reverse[ordered_q[n+1]])
-            logger.log(VERBOSE, 'launch_exp() - ordered_q[n+1], sorted_v[n+1] in 2nd for loop: %s,%s', str(ordered_q[n+1]), str(sorted_v[n+1]))
-            sorted_v.append(reverse[ordered_q[n+stop+1]])
-            logger.log(VERBOSE, 'launch_exp() - ordered_q[n+stop+1], sorted_v[n+2] in 2nd for loop: %s%s', str(ordered_q[n+stop+1]), str(sorted_v[n+2]))
+            sorted_v.append(reverse[ordered_q[n + 1]])
+            logger.log(VERBOSE, 'launch_exp() - ordered_q[n+1], sorted_v[n+1] in 2nd for loop: %s,%s',
+                       str(ordered_q[n + 1]), str(sorted_v[n + 1]))
+            sorted_v.append(reverse[ordered_q[n + stop + 1]])
+            logger.log(VERBOSE, 'launch_exp() - ordered_q[n+stop+1], sorted_v[n+2] in 2nd for loop: %s%s',
+                       str(ordered_q[n + stop + 1]), str(sorted_v[n + 2]))
         value = ''.join(str(v) for v in sorted_v)
         results.update({value: i[1]})
         out_f.write(value + '\t' + str(i[1]) + '\n')
@@ -192,7 +205,7 @@ def launch_exp(workbook, device, utility, n_qubits, oracle='11', num_shots=1024)
     one = '1'
     one_zero = '1'
     one_one_zero = '1'
-    for i in range(math.floor(n_qubits/2)):
+    for i in range(n_qubits // 2):
         zero += '00'
         one += '11'
         one_zero += '00'
@@ -211,7 +224,7 @@ def launch_exp(workbook, device, utility, n_qubits, oracle='11', num_shots=1024)
             if i == one_one_zero and oracle == '10':
                 correct = results[i]
             row += 1
-    error = (1 - (correct/total))*100
+    error = (1 - (correct / total)) * 100
 
     worksheet.write(row, col + 1, total)
     worksheet.write(1, 3, error)
