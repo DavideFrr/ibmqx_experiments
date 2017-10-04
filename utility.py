@@ -24,9 +24,10 @@ class Utility(object):
     __coupling_map = dict()
     __inverse_coupling_map = dict()
     __plain_map = dict()
-    __from_all_to_all = dict()
+    # __from_all_to_all = dict()
     __connected = dict()
     __n_qubits = 0
+    __ranks = dict()
 
     def __init__(self, coupling_map):
         if coupling_map:
@@ -34,10 +35,10 @@ class Utility(object):
             logger.log(VERBOSE, 'init() - coupling_map:\n%s', str(self.__coupling_map))
             self.invert_graph(coupling_map, self.__inverse_coupling_map)
             logger.log(VERBOSE, 'init() - inverse coupling map:\n%s', str(self.__inverse_coupling_map))
-            for i in range(len(coupling_map)):
-                self.__from_all_to_all.update({i: [-1]})
-                self.__from_all_to_all[i][0] = dict()
-            logger.log(VERBOSE, 'init() - from all to all:\n%s', str(self.__from_all_to_all))
+            # for i in range(len(coupling_map)):
+            #     self.__from_all_to_all.update({i: [-1]})
+            #     self.__from_all_to_all[i][0] = dict()
+            # logger.log(VERBOSE, 'init() - from all to all:\n%s', str(self.__from_all_to_all))
             for i in coupling_map:
                 self.__plain_map.update({i: coupling_map[i]})
                 for j in coupling_map:
@@ -51,7 +52,8 @@ class Utility(object):
     def close(self):
         self.__connected.clear()
         self.__n_qubits = 0
-        self.__from_all_to_all.clear()
+        # self.__from_all_to_all.clear()
+        self.__ranks.clear()
         self.__inverse_coupling_map.clear()
         self.__coupling_map.clear()
 
@@ -72,16 +74,20 @@ class Utility(object):
 
     # find the most connected qubit
     @staticmethod
-    def find_max(paths):
-        size = -1
-        node = None
-        for start in paths:
-            if len(paths[start][0]) > size:
-                size = len(paths[start][0])
-                node = start
-
-        ret = [size, node]
-        return ret
+    def find_max(ranks):
+        # size = -1
+        # node = None
+        # for start in paths:
+        #     if len(paths[start][0]) > size:
+        #         size = len(paths[start][0])
+        #         node = start
+        #
+        # ret = [size, node]
+        # return ret
+        logger.debug('ranks:\n%s', str(ranks))
+        found = max(ranks.items(), key=operator.itemgetter(1))[0]
+        logger.debug('max: %s', str(found))
+        return found
 
     # find all valid paths between qubits
     def find_all_paths(self, graph, start, end, path=None):
@@ -100,14 +106,16 @@ class Utility(object):
                     paths.append(newpath)
         return paths
 
-    def from_all_to_all(self):
+    def ranking(self):
         for start in self.__inverse_coupling_map:
+            self.__ranks.update({start: 0})
             for end in self.__inverse_coupling_map:
                 if start != end:
                     paths = self.find_all_paths(self.__inverse_coupling_map, start, end)
                     if len(paths) != 0:
-                        self.__from_all_to_all[start][0][end] = paths
-        logger.log(VERBOSE, 'form_all_to_all() - from_all_to_all:\n%s', str(self.__from_all_to_all))
+                        self.__ranks[start] = self.__ranks[start] + 1
+                        # self.__from_all_to_all[start][0][end] = paths
+        # logger.debug('form_all_to_all() - ranking:\n%s', str(self.__from_all_to_all))
 
     # create a valid path that connect qubits used in the circuit
     def create_path(self, start, inverse_map, plain_map):
@@ -231,19 +239,20 @@ class Utility(object):
 
         self.__n_qubits = n_qubits
 
-        self.from_all_to_all()
+        self.ranking()
 
-        max_path = self.find_max(self.__from_all_to_all)
-        logger.debug('create() - max_path: %s', str(max_path))
-        max_qubits = self.create_path(max_path[1], inverse_map=self.__inverse_coupling_map, plain_map=self.__plain_map)
+        # max_path = self.find_max(self.__from_all_to_all)
+        # logger.debug('create() - max_path: %s', str(max_path))
+        most_connected = self.find_max(self.__ranks)
+        max_qubits = self.create_path(most_connected, inverse_map=self.__inverse_coupling_map, plain_map=self.__plain_map)
         logger.debug('create() - N qubits: %s', str(self.__n_qubits))
         logger.debug('create() - Max qubits: %s', str(max_qubits))
         if max_qubits < self.__n_qubits:
             logger.critical('create() - Can use only up to %s qubits', str(max_qubits))
             exit(2)
-        self.place_h(circuit, max_path[1], quantum_r, x=x)
+        self.place_h(circuit, most_connected, quantum_r, x=x)
         self.place_cx_(circuit, quantum_r, oracle=oracle)
-        self.place_h(circuit, max_path[1], quantum_r, initial=False)
+        self.place_h(circuit, most_connected, quantum_r, initial=False)
         if x is True:
             self.place_x(circuit, quantum_r)
         self.measure(circuit, quantum_r, classical_r)
