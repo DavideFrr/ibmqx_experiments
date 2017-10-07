@@ -7,6 +7,7 @@ August 2017
 
 
 import logging
+import myLogger
 import os
 import operator
 import xlsxwriter
@@ -22,14 +23,9 @@ sys.path.append(  # solve the relative dependencies if you clone QISKit from the
 from qiskit import QuantumProgram
 import Qconfig
 
-
 logger = logging.getLogger('envariance')
+logger.addHandler(myLogger.MyHandler())
 logger.setLevel(logging.INFO)
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
-ch.setFormatter(formatter)
-logger.addHandler(ch)
 logger.propagate = False
 
 

@@ -5,18 +5,13 @@ August 2017
 
 """
 
-
 import logging
+import myLogger
 import operator
 
-VERBOSE = 5
 logger = logging.getLogger('utility')
+logger.addHandler(myLogger.MyHandler())
 logger.setLevel(logging.CRITICAL)
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
-ch.setFormatter(formatter)
-logger.addHandler(ch)
 logger.propagate = False
 
 
@@ -32,15 +27,15 @@ class Utility(object):
     def __init__(self, coupling_map):
         if coupling_map:
             self.__coupling_map = coupling_map.copy()
-            logger.log(VERBOSE, 'init() - coupling_map:\n%s', str(self.__coupling_map))
+            logger.log(logging.DEBUG, 'init() - coupling_map:\n%s', str(self.__coupling_map))
             self.invert_graph(coupling_map, self.__inverse_coupling_map)
-            logger.log(VERBOSE, 'init() - inverse coupling map:\n%s', str(self.__inverse_coupling_map))
+            logger.log(logging.DEBUG, 'init() - inverse coupling map:\n%s', str(self.__inverse_coupling_map))
             for i in coupling_map:
                 self.__plain_map.update({i: coupling_map[i]})
                 for j in coupling_map:
                     if i in coupling_map[j]:
                         self.__plain_map[i] = self.__plain_map[i] + [j]
-            logger.log(VERBOSE, 'init() - plain map:\n%s', str(self.__plain_map))
+            logger.log(logging.DEBUG, 'init() - plain map:\n%s', str(self.__plain_map))
             self.ranking(self.__coupling_map, self.__ranks)
             self.__most_connected = self.find_max(self.__ranks)
         else:
@@ -129,10 +124,10 @@ class Utility(object):
 
     def cx(self, circuit, control_qubit, target_qubit, control, target):
         if target in self.__coupling_map[control]:
-            logger.debug('cx() - cnot: (%s, %s)', str(control), str(target))
+            logger.log(logging.VERBOSE, 'cx() - cnot: (%s, %s)', str(control), str(target))
             circuit.cx(control_qubit, target_qubit)
         elif control in self.__coupling_map[target]:
-            logger.debug('cx() - inverse-cnot: (%s, %s)', str(control), str(target))
+            logger.log(logging.VERBOSE, 'cx() - inverse-cnot: (%s, %s)', str(control), str(target))
             circuit.barrier()
             circuit.h(control_qubit)
             circuit.h(target_qubit)
@@ -147,16 +142,16 @@ class Utility(object):
     # place cnot gates based on the path created in create_path method
     def place_cx_(self, circuit, quantum_r, oracle='11'):
         if not oracle == '00':
-            logger.log(VERBOSE, 'place_cx() - oracle != 00')
+            logger.log(logging.VERBOSE, 'place_cx() - oracle != 00')
             stop = self.__n_qubits // 2
             for qubit in self.__connected:
                 if self.__connected[qubit] != -1:
                     if oracle == '11':
-                        logger.log(VERBOSE, 'place_cx() - oracle = 11')
+                        logger.log(logging.VERBOSE, 'place_cx() - oracle = 11')
                         self.cx(circuit, quantum_r[qubit], quantum_r[self.__connected[qubit]], qubit,
                                 self.__connected[qubit])
                     elif oracle == '10':
-                        logger.log(VERBOSE, 'place_cx() - oracle = 10')
+                        logger.log(logging.VERBOSE, 'place_cx() - oracle = 10')
                         if stop > 0:
                             self.cx(circuit, quantum_r[qubit], quantum_r[self.__connected[qubit]], qubit,
                                     self.__connected[qubit])
@@ -177,7 +172,7 @@ class Utility(object):
     # place Pauli-X gates
     def place_x(self, circuit, quantum_r):
         sorted_c = sorted(self.__connected.items(), key=operator.itemgetter(0))
-        logger.log(VERBOSE, 'place_x() - place_x - sorted_c:\n%s', str(sorted_c))
+        logger.log(logging.VERBOSE, 'place_x() - sorted_c:\n%s', str(sorted_c))
         s_0 = self.__n_qubits // 2
         i = 0
         for qubit in sorted_c:
@@ -204,7 +199,8 @@ class Utility(object):
 
         self.__n_qubits = n_qubits
 
-        max_qubits = self.create_path(self.__most_connected[0], inverse_map=self.__inverse_coupling_map, plain_map=self.__plain_map)
+        max_qubits = self.create_path(self.__most_connected[0], inverse_map=self.__inverse_coupling_map,
+                                      plain_map=self.__plain_map)
         logger.debug('create() - N qubits: %s', str(self.__n_qubits))
         logger.debug('create() - Max qubits: %s', str(max_qubits))
         if max_qubits < self.__n_qubits:

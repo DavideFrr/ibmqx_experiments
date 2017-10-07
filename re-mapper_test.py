@@ -113,8 +113,4 @@ out_f.write('VALUES\t\tCOUNTS\n\n')
 for i in sorted_c:
     out_f.write(i[0] + '\t' + str(i[1]) + '\n')
 
-# out_f.write('\nCOUNTS\n\n')
-# for i in sorted_c:
-#     out_f.write(str(i[1]) + '\n')
-
 out_f.close()

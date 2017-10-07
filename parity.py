@@ -7,6 +7,7 @@ August 2017
 
 
 import logging
+import  myLogger
 import os
 import operator
 import xlsxwriter
@@ -23,14 +24,9 @@ import Qconfig
 from qiskit import QuantumProgram
 
 
-VERBOSE = 5
-logger = logging.getLogger('parity')
+logger = logging.getLogger('envariance')
+logger.addHandler(myLogger.MyHandler())
 logger.setLevel(logging.INFO)
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
-ch.setFormatter(formatter)
-logger.addHandler(ch)
 logger.propagate = False
 
 coupling_map_qx2 = {
@@ -169,16 +165,16 @@ def launch_exp(workbook, device, utility, n_qubits, oracle='11', num_shots=1024)
     stop = n_qubits // 2
     for i in sorted_c:
         reverse = i[0][::-1]
-        logger.log(VERBOSE, 'launch_exp() - reverse in for 1st loop: %s', str(reverse))
+        logger.log(logging.VERBOSE, 'launch_exp() - reverse in for 1st loop: %s', str(reverse))
         sorted_v = [reverse[ordered_q[0]]]
-        logger.log(VERBOSE, 'launch_exp() - oredred_q[0] in 1st for loop: %s', str(ordered_q[0]))
-        logger.log(VERBOSE, 'launch_exp() - sorted_v in 1st for loop: %s', str(sorted_v))
+        logger.log(logging.VERBOSE, 'launch_exp() - oredred_q[0] in 1st for loop: %s', str(ordered_q[0]))
+        logger.log(logging.VERBOSE, 'launch_exp() - sorted_v in 1st for loop: %s', str(sorted_v))
         for n in range(stop):
             sorted_v.append(reverse[ordered_q[n + 1]])
-            logger.log(VERBOSE, 'launch_exp() - ordered_q[n+1], sorted_v[n+1] in 2nd for loop: %s,%s',
+            logger.log(logging.VERBOSE, 'launch_exp() - ordered_q[n+1], sorted_v[n+1] in 2nd for loop: %s,%s',
                        str(ordered_q[n + 1]), str(sorted_v[n + 1]))
             sorted_v.append(reverse[ordered_q[n + stop + 1]])
-            logger.log(VERBOSE, 'launch_exp() - ordered_q[n+stop+1], sorted_v[n+2] in 2nd for loop: %s%s',
+            logger.log(logging.VERBOSE, 'launch_exp() - ordered_q[n+stop+1], sorted_v[n+2] in 2nd for loop: %s%s',
                        str(ordered_q[n + stop + 1]), str(sorted_v[n + 2]))
         value = ''.join(str(v) for v in sorted_v)
         results.update({value: i[1]})
