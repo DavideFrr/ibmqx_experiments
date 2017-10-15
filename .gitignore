@@ -35,7 +35,7 @@ wheels/
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Unit test / coverage reports
+# Unit ranking / coverage reports
 htmlcov/
 .tox/
 .coverage
@@ -151,6 +151,7 @@ crashlytics-build.properties
 fabric.properties
 .idea/
 OLD_README.md
-Data_Oracle/**.txt
-Data_Oracle/**.xlsx
+Data_envariance/
+Data_Parity/
 ibmqx4_test.py
+re-mapper_test.py
