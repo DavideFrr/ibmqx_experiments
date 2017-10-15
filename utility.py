@@ -11,7 +11,7 @@ import operator
 
 logger = logging.getLogger('utility')
 logger.addHandler(myLogger.MyHandler())
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.CRITICAL)
 logger.propagate = False
 
 

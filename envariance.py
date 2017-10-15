@@ -244,7 +244,7 @@ logger.info('Started')
 directory = 'Data_Envariance/'
 os.makedirs(os.path.dirname(directory), exist_ok=True)
 
-workbook5_name = directory + 'test.xlsx'
+workbook5_name = directory + 'ibmqx4_n_qubits_envariance.xlsx'
 
 # Comment this two lines if you've already created the file in a previous execution
 workbook5 = xlsxwriter.Workbook(workbook5_name)
@@ -252,11 +252,11 @@ workbook5.close()
 
 utility = Utility(coupling_map_qx4)
 for n_shots in shots:
-    launch_exp(workbook5_name, online_sim, utility, n_qubits=2, num_shots=n_shots)
+    launch_exp(workbook5_name, qx4, utility, n_qubits=2, num_shots=n_shots)
     time.sleep(2)
-    launch_exp(workbook5_name, online_sim, utility, n_qubits=3, num_shots=n_shots)
+    launch_exp(workbook5_name, qx4, utility, n_qubits=3, num_shots=n_shots)
     time.sleep(2)
-    launch_exp(workbook5_name, online_sim, utility, n_qubits=5, num_shots=n_shots)
+    launch_exp(workbook5_name, qx4, utility, n_qubits=5, num_shots=n_shots)
     time.sleep(2)
 
 utility.close()
@@ -264,28 +264,28 @@ utility.close()
 workbook16_name = directory + 'ibmqx5_n_qubits_envariance.xlsx'
 
 # Comment this two lines if you've already created the file in a previous execution
-# workbook16 = xlsxwriter.Workbook(directory + 'ibmqx5_n_qubits_envariance.xlsx')
-# workbook16.close()
-#
-# utility = Utility(coupling_map_qx5)
-# for n_shots in shots:
-#     launch_exp(workbook16_name, qx5, utility, n_qubits=2, num_shots=n_shots)
-#     time.sleep(2)
-#     launch_exp(workbook16_name, qx5, utility, n_qubits=3, num_shots=n_shots)
-#     time.sleep(2)
-#     launch_exp(workbook16_name, qx5, utility, n_qubits=5, num_shots=n_shots)
-#     time.sleep(2)
-#     launch_exp(workbook16_name, qx5, utility, n_qubits=7, num_shots=n_shots)
-#     time.sleep(2)
-#     launch_exp(workbook16_name, qx5, utility, n_qubits=9, num_shots=n_shots)
-#     time.sleep(2)
-#     launch_exp(workbook16_name, qx5, utility, n_qubits=12, num_shots=n_shots)
-#     time.sleep(2)
-#     launch_exp(workbook16_name, qx5, utility, n_qubits=14, num_shots=n_shots)
-#     time.sleep(2)
-#     launch_exp(workbook16_name, qx5, utility, n_qubits=16, num_shots=n_shots)
-#     time.sleep(2)
-#
-# utility.close()
+workbook16 = xlsxwriter.Workbook(directory + 'ibmqx5_n_qubits_envariance.xlsx')
+workbook16.close()
+
+utility = Utility(coupling_map_qx5)
+for n_shots in shots:
+    launch_exp(workbook16_name, qx5, utility, n_qubits=2, num_shots=n_shots)
+    time.sleep(2)
+    launch_exp(workbook16_name, qx5, utility, n_qubits=3, num_shots=n_shots)
+    time.sleep(2)
+    launch_exp(workbook16_name, qx5, utility, n_qubits=5, num_shots=n_shots)
+    time.sleep(2)
+    launch_exp(workbook16_name, qx5, utility, n_qubits=7, num_shots=n_shots)
+    time.sleep(2)
+    launch_exp(workbook16_name, qx5, utility, n_qubits=9, num_shots=n_shots)
+    time.sleep(2)
+    launch_exp(workbook16_name, qx5, utility, n_qubits=12, num_shots=n_shots)
+    time.sleep(2)
+    launch_exp(workbook16_name, qx5, utility, n_qubits=14, num_shots=n_shots)
+    time.sleep(2)
+    launch_exp(workbook16_name, qx5, utility, n_qubits=16, num_shots=n_shots)
+    time.sleep(2)
+
+utility.close()
 
 logger.info('All done.')
