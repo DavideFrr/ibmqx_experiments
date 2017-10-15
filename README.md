@@ -35,13 +35,14 @@ is reached, the algorithm ignores it and goes back to the previous one (if we ha
 visited that ode starting from the current source, than every path that goes from it has
 already been explored or is going to be).
 
-All of the above is done by the explore() method which is called by the ranking() method,
-whose objective is to assign a rank (the counter incremented when a node is reached) to
+All of the above is done by the [explore()](https://github.com/DavideFrr/ibmqx_experiments/blob/5ce0942c3b50fe4455d19118e54a391c6cdccfa2/utility.py#L55)
+method which is called by the [ranking()](https://github.com/DavideFrr/ibmqx_experiments/blob/5ce0942c3b50fe4455d19118e54a391c6cdccfa2/utility.py#L66)
+method, whose objective is to assign a rank (the counter incremented when a node is reached) to
 every node based on how many nodes can reach it. The node with the higher rank will be
 selected as the start point for building our circuit.
 
-After the most connected node/qubit has been found, the create_path() method explores
-the map backwards and ﬁrst connects all the qubits for which a classic CNOT gate is feasible.
+After the most connected node/qubit has been found, the [create_path()](https://github.com/DavideFrr/ibmqx_experiments/blob/5ce0942c3b50fe4455d19118e54a391c6cdccfa2/utility.py#L97)
+method explores the map backwards and ﬁrst connects all the qubits for which a classic CNOT gate is feasible.
 Then, it starts connecting the other qubits with inverse-CNOT gates.
 In this way, we can keep the number of gates to a minimum, assuming that every gate
 we add to the circuit brings a certain amount of error with it.
