@@ -25,22 +25,41 @@ and than proceed to create the circuits for envariance demonstration and parity 
 
 As already mentioned, the core of the problem is to find the qubit that is most connected;
 by most connected we mean that it can be connected (directly or not) by means of cnot gates
-to as many other qubits as possible. This is done in two main phases: first we invert all the connection
-in the coupling map and than we explore all the possible paths from one qubit to another. The most connected
-is the one with the most number of paths to different qubits.
+to as many other qubits as possible.
 
-_ibmqx3 coupling-map graphic rapresentation_:
-# ![ibmqx3_coupling-map](images/ibmqx3_coupling-map.png)
+The algorithm starts from a source node and explores the paths that goes from there,
+every time a new node is reached, it’s added to the list of visited ones from the previously
+mentioned source node and a counter for the visited node is incremented by one. If during
+the exploration of the paths exiting from the current source node an already visited node
+is reached, the algorithm ignores it and goes back to the previous one (if we have already
+visited that ode starting from the current source, than every path that goes from it has
+already been explored or is going to be).
+
+All of the above is done by the explore() method which is called by the ranking() method,
+whose objective is to assign a rank (the counter incremented when a node is reached) to
+every node based on how many nodes can reach it. The node with the higher rank will be
+selected as the start point for building our circuit.
+
+After the most connected node/qubit has been found, the create_path() method explores
+the map backwards and ﬁrst connects all the qubits for which a classic CNOT gate is feasible.
+Then, it starts connecting the other qubits with inverse-CNOT gates.
+In this way, we can keep the number of gates to a minimum, assuming that every gate
+we add to the circuit brings a certain amount of error with it.
+
+
+_ibmqx5 coupling-map graphic rapresentation_:
+# ![qx5_coupling-map](images/qx5_coupling-map.png)
 
 _coupling-map python rapresentation_:
 ```python
-coupling_map_16 = {
-    0: [1],
-    1: [2],    2: [3],
-    3: [14],
-    4: [3, 5],
-    5: [],
-    6: [7, 11],
+coupling_map_qx5 = {
+    0: [],
+    1: [0, 2],
+    2: [3],
+    3: [4, 14],
+    4: [],
+    5: [4],
+    6: [5, 7, 11],
     7: [10],
     8: [7],
     9: [8, 10],
@@ -49,13 +68,14 @@ coupling_map_16 = {
     12: [5, 11, 13],
     13: [4, 14],
     14: [],
-    15: [0, 14],
+    15: [0, 2, 14],
 }
 ```
 
 
 Below the portion of the coupling-map selected by utility.py:
-# ![ibmqx3_envariance_coupling-map](images/ibmqx3_env_map.png)
+# ![qx5_circ_map](images/qx5_circ_map.png)
+_Red arrows means the use of inverse cnot_
 
 ## Envariance
 

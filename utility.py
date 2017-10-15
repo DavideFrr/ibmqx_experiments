@@ -11,7 +11,7 @@ import operator
 
 logger = logging.getLogger('utility')
 logger.addHandler(myLogger.MyHandler())
-logger.setLevel(logging.CRITICAL)
+logger.setLevel(logging.DEBUG)
 logger.propagate = False
 
 
@@ -19,9 +19,10 @@ class Utility(object):
     __coupling_map = dict()
     __inverse_coupling_map = dict()
     __plain_map = dict()
-    __connected = dict()
+    __path = dict()
     __n_qubits = 0
     __ranks = dict()
+    __connected = dict()
     __most_connected = []
 
     def __init__(self, coupling_map):
@@ -38,16 +39,17 @@ class Utility(object):
             logger.log(logging.DEBUG, 'init() - plain map:\n%s', str(self.__plain_map))
             self.ranking(self.__coupling_map, self.__ranks)
             self.__most_connected = self.find_max(self.__ranks)
+            self.create_path(self.__most_connected[0], inverse_map=self.__inverse_coupling_map,
+                             plain_map=self.__plain_map)
         else:
             logger.critical('init() - Null argument: coupling_map')
             exit(1)
 
     def close(self):
-        self.__connected.clear()
-        self.__n_qubits = 0
         self.__ranks.clear()
         self.__inverse_coupling_map.clear()
         self.__coupling_map.clear()
+        self.__path.clear()
         self.__most_connected.clear()
 
     def explore(self, source, visiting, visited, ranks):
@@ -58,6 +60,8 @@ class Utility(object):
                     ranks.update({next: 0})
                 ranks[next] = ranks[next] + 1
                 self.explore(source, next, visited, ranks)
+
+    # TODO Try using some sort of "page-ranking like" algorithm
 
     def ranking(self, graph, ranks):
         visited = dict()
@@ -91,17 +95,17 @@ class Utility(object):
 
     # create a valid path that connect qubits used in the circuit
     def create_path(self, start, inverse_map, plain_map):
-        self.__connected.update({start: -1})
+        self.__path.update({start: -1})
         to_connect = [start] + inverse_map[start]
-        count = self.__n_qubits - 1
+        count = len(self.__coupling_map) - 1
         for visiting in to_connect:
             if count <= 0:
                 break
             for node in inverse_map[visiting]:
                 if count <= 0:
                     break
-                if node not in self.__connected:
-                    self.__connected.update({node: visiting})
+                if node not in self.__path:
+                    self.__path.update({node: visiting})
                     if node not in to_connect:
                         to_connect.append(node)
                     count -= 1
@@ -114,13 +118,12 @@ class Utility(object):
                 for node in plain_map[visiting]:
                     if count <= 0:
                         break
-                    if node not in self.__connected:
-                        self.__connected.update({node: visiting})
+                    if node not in self.__path:
+                        self.__path.update({node: visiting})
                         if node not in to_connect:
                             to_connect.append(node)
                         count -= 1
-        logger.debug('create_path() - connected:\n%s', str(self.__connected))
-        return len(self.__connected)
+        logger.debug('create_path() - path:\n%s', str(self.__path))
 
     def cx(self, circuit, control_qubit, target_qubit, control, target):
         if target in self.__coupling_map[control]:
@@ -128,13 +131,11 @@ class Utility(object):
             circuit.cx(control_qubit, target_qubit)
         elif control in self.__coupling_map[target]:
             logger.log(logging.VERBOSE, 'cx() - inverse-cnot: (%s, %s)', str(control), str(target))
-            circuit.barrier()
             circuit.h(control_qubit)
             circuit.h(target_qubit)
             circuit.cx(target_qubit, control_qubit)
             circuit.h(control_qubit)
             circuit.h(target_qubit)
-            circuit.barrier()
         else:
             logger.critical('cx() - Cannot connect qubit %s to qubit %s', str(control), str(target))
             exit(3)
@@ -175,7 +176,10 @@ class Utility(object):
         logger.log(logging.VERBOSE, 'place_x() - sorted_c:\n%s', str(sorted_c))
         s_0 = self.__n_qubits // 2
         i = 0
+        count = self.__n_qubits - 1
         for qubit in sorted_c:
+            if count <= 0:
+                break
             if i >= s_0:
                 circuit.x(quantum_r[qubit[0]])
             else:
@@ -199,13 +203,20 @@ class Utility(object):
 
         self.__n_qubits = n_qubits
 
-        max_qubits = self.create_path(self.__most_connected[0], inverse_map=self.__inverse_coupling_map,
-                                      plain_map=self.__plain_map)
+        max_qubits = len(self.__path)
         logger.debug('create() - N qubits: %s', str(self.__n_qubits))
         logger.debug('create() - Max qubits: %s', str(max_qubits))
         if max_qubits < self.__n_qubits:
             logger.critical('create() - Can use only up to %s qubits', str(max_qubits))
             exit(2)
+
+        count = self.__n_qubits
+        for qubit in self.__path:
+            if count <= 0:
+                break
+            self.__connected.update({qubit: self.__path[qubit]})
+            count -= 1
+        logger.debug('create() - connected:\n%s', str(self.__connected))
         self.place_h(circuit, self.__most_connected[0], quantum_r, x=x)
         self.place_cx_(circuit, quantum_r, oracle=oracle)
         self.place_h(circuit, self.__most_connected[0], quantum_r, initial=False)
@@ -213,17 +224,17 @@ class Utility(object):
             self.place_x(circuit, quantum_r)
         self.measure(circuit, quantum_r, classical_r)
 
-    def envariance(self, circuit, quantum_r, classicla_r, n_qubits):
-        self.create(circuit, quantum_r, classicla_r, n_qubits)
-        self.__connected.clear()
+    def envariance(self, circuit, quantum_r, classical_r, n_qubits):
+        self.create(circuit, quantum_r, classical_r, n_qubits)
         self.__n_qubits = 0
+        self.__connected.clear()
 
-    def parity(self, circuit, quantum_r, classicla_r, n_qubits, oracle='11', connected=None):
+    def parity(self, circuit, quantum_r, classical_r, n_qubits, oracle='11', connected=None):
         if connected is None:
             connected = []
-        self.create(circuit, quantum_r, classicla_r, n_qubits, x=False, oracle=oracle)
+        self.create(circuit, quantum_r, classical_r, n_qubits, x=False, oracle=oracle)
         for i in self.__connected:
             connected.append(i)
         logger.debug('parity() - connected:\n%s', str(connected))
-        self.__connected.clear()
         self.__n_qubits = 0
+        self.__connected.clear()

@@ -5,18 +5,22 @@ August 2017
 
 """
 
-
 import logging
+
+from os.path import expanduser
+
 import myLogger
 import os
 import operator
 import xlsxwriter
+import xlrd
 import time
 import math
 
 from utility import Utility
 
 import sys
+
 sys.path.append(  # solve the relative dependencies if you clone QISKit from the Git repo and use like a global.
     "D:/PyCharm/qiskit-sdk-py")
 
@@ -27,7 +31,6 @@ logger = logging.getLogger('envariance')
 logger.addHandler(myLogger.MyHandler())
 logger.setLevel(logging.INFO)
 logger.propagate = False
-
 
 coupling_map_qx2 = {
     0: [1, 2],
@@ -98,8 +101,9 @@ local_sim = 'local_qasm_simulator'
 
 
 # launch envariance experiment on the given device
-def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
+def launch_exp(workbook_name, device, utility, n_qubits, num_shots=1024):
     size = 0
+    home = expanduser("~")
 
     if device == qx2 or device == qx4:
         if n_qubits <= 5:
@@ -134,13 +138,14 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
 
     circuit = Q_program.create_circuit("envariance", [quantum_r], [classical_r])
 
-    utility.envariance(circuit=circuit, quantum_r=quantum_r, classicla_r=classical_r, n_qubits=n_qubits)
+    utility.envariance(circuit=circuit, quantum_r=quantum_r, classical_r=classical_r, n_qubits=n_qubits)
 
     QASM_source = Q_program.get_qasm("envariance")
 
     logger.info('launch_exp() - QASM:\n%s', str(QASM_source))
 
-    result = Q_program.execute(["envariance"], backend=device, wait=2, timeout=480, shots=num_shots, max_credits=10, silent=False)
+    result = Q_program.execute(["envariance"], backend=device, wait=2, timeout=1000, shots=num_shots, max_credits=10,
+                               silent=False)
 
     counts = result.get_counts("envariance")
 
@@ -160,12 +165,21 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
 
     out_f.close()
 
-    num_rows = len(sorted_c)
-    sheet = str(num_shots) + '_' + str(n_qubits)
+    wbRD = xlrd.open_workbook(workbook_name.format(home))
+    sheets = wbRD.sheets()
 
-    worksheet = workbook.add_worksheet(sheet)
-    bold = workbook.add_format({'bold': True})
-    binary = workbook.add_format()
+    wb = xlsxwriter.Workbook(workbook_name.format(home))
+
+    for sheet in sheets:  # write data from old file
+        newSheet = wb.add_worksheet(sheet.name)
+        for row in range(sheet.nrows):
+            for col in range(sheet.ncols):
+                newSheet.write(row, col, sheet.cell(row, col).value)
+
+    sheet = str(num_shots) + '_' + str(n_qubits)
+    worksheet = wb.add_worksheet(sheet)
+    bold = wb.add_format({'bold': True})
+    binary = wb.add_format()
     binary.set_num_format_index('00000')
 
     worksheet.write(0, 0, 'Values', bold)
@@ -185,33 +199,38 @@ def launch_exp(workbook, device, utility, n_qubits, num_shots=1024):
     worksheet.write(row, col + 1, '=SUM(B2:B' + str(row) + ')')
     worksheet.write(1, 3, fidelity)
 
-    chart = workbook.add_chart({'type': 'column'})
-    categories = '=' + sheet + '!$A$2:$A$' + str(num_rows + 1)
-    values = '=' + sheet + '!$C$2:$C$' + str(num_rows + 1)
-    chart.add_series({
-        'categories': categories,
-        'values': values,
-        'data_labels': {
-            'value': False,
-            'series_name': False,
-            'num_format': '0.#0',
-            'font': {'bold': True},
-        },
-    })
+    # Uncomment the below section if you want to add charts to the file
 
-    chart.set_legend({
-        'none': True
-    })
+    # chart = wb.add_chart({'type': 'column'})
+    # categories = '=' + sheet + '!$A$2:$A$' + str(num_rows + 1)
+    # values = '=' + sheet + '!$C$2:$C$' + str(num_rows + 1)
+    # chart.add_series({
+    #     'categories': categories,
+    #     'values': values,
+    #     'data_labels': {
+    #         'value': False,
+    #         'series_name': False,
+    #         'num_format': '0.#0',
+    #         'font': {'bold': True},
+    #     },
+    # })
+    #
+    # chart.set_legend({
+    #     'none': True
+    # })
+    #
+    # chart.set_title({
+    #     'name': sheet + '_qubits_envariance'
+    # })
+    #
+    # chart.set_x_axis({
+    #     'num_font': {'rotation': 50},
+    # })
+    #
+    # worksheet.insert_chart('F3', chart)
 
-    chart.set_title({
-        'name': sheet + '_qubits_envariance'
-    })
+    wb.close()
 
-    chart.set_x_axis({
-        'num_font': {'rotation': 50},
-    })
-
-    worksheet.insert_chart('F3', chart)
 
 shots = [
     1024,
@@ -224,44 +243,49 @@ logger.info('Started')
 
 directory = 'Data_Envariance/'
 os.makedirs(os.path.dirname(directory), exist_ok=True)
-workbook5 = xlsxwriter.Workbook(directory + 'ibmqx4_n_qubits_envariance.xlsx')
+
+workbook5_name = directory + 'test.xlsx'
+
+# Comment this two lines if you've already created the file in a previous execution
+workbook5 = xlsxwriter.Workbook(workbook5_name)
+workbook5.close()
 
 utility = Utility(coupling_map_qx4)
 for n_shots in shots:
-    launch_exp(workbook5, qx4, utility, n_qubits=2, num_shots=n_shots)
+    launch_exp(workbook5_name, online_sim, utility, n_qubits=2, num_shots=n_shots)
     time.sleep(2)
-    launch_exp(workbook5, qx4, utility, n_qubits=3, num_shots=n_shots)
+    launch_exp(workbook5_name, online_sim, utility, n_qubits=3, num_shots=n_shots)
     time.sleep(2)
-    launch_exp(workbook5, qx4, utility, n_qubits=5, num_shots=n_shots)
-    time.sleep(2)
-
-utility.close()
-
-workbook5.close()
-
-workbook16 = xlsxwriter.Workbook(directory + 'ibmqx5_n_qubits_envariance.xlsx')
-
-utility = Utility(coupling_map_qx5)
-for n_shots in shots:
-    launch_exp(workbook16, qx5, utility, n_qubits=2, num_shots=n_shots)
-    time.sleep(2)
-    launch_exp(workbook16, qx5, utility, n_qubits=3, num_shots=n_shots)
-    time.sleep(2)
-    launch_exp(workbook16, qx5, utility, n_qubits=5, num_shots=n_shots)
-    time.sleep(2)
-    launch_exp(workbook16, qx5, utility, n_qubits=7, num_shots=n_shots)
-    time.sleep(2)
-    launch_exp(workbook16, qx5, utility, n_qubits=9, num_shots=n_shots)
-    time.sleep(2)
-    launch_exp(workbook16, qx5, utility, n_qubits=12, num_shots=n_shots)
-    time.sleep(2)
-    launch_exp(workbook16, qx5, utility, n_qubits=14, num_shots=n_shots)
-    time.sleep(2)
-    launch_exp(workbook16, qx5, utility, n_qubits=16, num_shots=n_shots)
+    launch_exp(workbook5_name, online_sim, utility, n_qubits=5, num_shots=n_shots)
     time.sleep(2)
 
 utility.close()
 
-workbook16.close()
+workbook16_name = directory + 'ibmqx5_n_qubits_envariance.xlsx'
+
+# Comment this two lines if you've already created the file in a previous execution
+# workbook16 = xlsxwriter.Workbook(directory + 'ibmqx5_n_qubits_envariance.xlsx')
+# workbook16.close()
+#
+# utility = Utility(coupling_map_qx5)
+# for n_shots in shots:
+#     launch_exp(workbook16_name, qx5, utility, n_qubits=2, num_shots=n_shots)
+#     time.sleep(2)
+#     launch_exp(workbook16_name, qx5, utility, n_qubits=3, num_shots=n_shots)
+#     time.sleep(2)
+#     launch_exp(workbook16_name, qx5, utility, n_qubits=5, num_shots=n_shots)
+#     time.sleep(2)
+#     launch_exp(workbook16_name, qx5, utility, n_qubits=7, num_shots=n_shots)
+#     time.sleep(2)
+#     launch_exp(workbook16_name, qx5, utility, n_qubits=9, num_shots=n_shots)
+#     time.sleep(2)
+#     launch_exp(workbook16_name, qx5, utility, n_qubits=12, num_shots=n_shots)
+#     time.sleep(2)
+#     launch_exp(workbook16_name, qx5, utility, n_qubits=14, num_shots=n_shots)
+#     time.sleep(2)
+#     launch_exp(workbook16_name, qx5, utility, n_qubits=16, num_shots=n_shots)
+#     time.sleep(2)
+#
+# utility.close()
 
 logger.info('All done.')
