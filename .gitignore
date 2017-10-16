@@ -151,7 +151,7 @@ crashlytics-build.properties
 fabric.properties
 .idea/
 OLD_README.md
-Data_envariance/
-Data_Parity/
+Data_Parity/ibmqx4
 ibmqx4_test.py
 re-mapper_test.py
+Data_Parity/ibmqx4_n_qubits_00_parity.xlsx
