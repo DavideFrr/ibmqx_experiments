@@ -1,4 +1,0 @@
-VALUES		COUNTS
-
-000	6
-111	4

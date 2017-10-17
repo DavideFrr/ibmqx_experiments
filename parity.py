@@ -274,7 +274,7 @@ oracles = [
 # oracle is the srting you wont to learn: '10' for '10...10', '11' for '11...11', '00' for '00...00'
 logger.info('Started')
 
-utility = Utility(coupling_map_qx5)
+utility = Utility(coupling_map_qx4)
 directory = 'Data_Parity/'
 os.makedirs(os.path.dirname(directory), exist_ok=True)
 
@@ -286,20 +286,20 @@ for oracle in oracles:
     workbook.close()
 
     for n_shots in range(10, (shots+10), 10):
-        launch_exp(workbook_name, qx5, utility, n_qubits=3, oracle=oracle, num_shots=n_shots)
+        launch_exp(workbook_name, qx4, utility, n_qubits=3, oracle=oracle, num_shots=n_shots)
         time.sleep(2)
-        launch_exp(workbook_name, qx5, utility, n_qubits=5, oracle=oracle, num_shots=n_shots)
+        launch_exp(workbook_name, qx4, utility, n_qubits=5, oracle=oracle, num_shots=n_shots)
         time.sleep(2)
-        launch_exp(workbook_name, qx5, utility, n_qubits=7, oracle=oracle, num_shots=n_shots)
-        time.sleep(2)
-        launch_exp(workbook_name, qx5, utility, n_qubits=9, oracle=oracle, num_shots=n_shots)
-        time.sleep(2)
-        launch_exp(workbook_name, qx5, utility, n_qubits=12, oracle=oracle, num_shots=n_shots)
-        time.sleep(2)
-        launch_exp(workbook_name, qx5, utility, n_qubits=14, oracle=oracle, num_shots=n_shots)
-        time.sleep(2)
-        launch_exp(workbook_name, qx5, utility, n_qubits=16, oracle=oracle, num_shots=n_shots)
-        time.sleep(2)
+        # launch_exp(workbook_name, qx5, utility, n_qubits=7, oracle=oracle, num_shots=n_shots)
+        # time.sleep(2)
+        # launch_exp(workbook_name, qx5, utility, n_qubits=9, oracle=oracle, num_shots=n_shots)
+        # time.sleep(2)
+        # launch_exp(workbook_name, qx5, utility, n_qubits=12, oracle=oracle, num_shots=n_shots)
+        # time.sleep(2)
+        # launch_exp(workbook_name, qx5, utility, n_qubits=14, oracle=oracle, num_shots=n_shots)
+        # time.sleep(2)
+        # launch_exp(workbook_name, qx5, utility, n_qubits=16, oracle=oracle, num_shots=n_shots)
+        # time.sleep(2)
 
 utility.close()
 
