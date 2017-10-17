@@ -15,13 +15,22 @@ from qiskit import QuantumProgram
 import Qconfig
 import operator
 
-coupling_map_16 = {
-    0: [1],
-    1: [2], 2: [3],
-    3: [14],
-    4: [3, 5],
-    5: [],
-    6: [7, 11],
+coupling_map_qx4 = {
+    0: [],
+    1: [0],
+    2: [0, 1, 4],
+    3: [2, 4],
+    4: [],
+}
+
+coupling_map_qx5 = {
+    0: [],
+    1: [0, 2],
+    2: [3],
+    3: [4, 14],
+    4: [],
+    5: [4],
+    6: [5, 7, 11],
     7: [10],
     8: [7],
     9: [8, 10],
@@ -30,7 +39,7 @@ coupling_map_16 = {
     12: [5, 11, 13],
     13: [4, 14],
     14: [],
-    15: [0, 14],
+    15: [0, 2, 14],
 }
 
 Q_SPECS = {
@@ -60,7 +69,7 @@ quantum_r = Q_program.get_quantum_register("qr")
 classical_r = Q_program.get_classical_register('cr')
 
 # Number of qubits to be used
-n_qubits = 3
+n_qubits = 16
 
 for i in range(n_qubits):
     if i != 0:
@@ -75,17 +84,17 @@ for i in range(n_qubits):
 for i in range(n_qubits):
     circuit.h(quantum_r[i])
 
-# for i in range(9):
-#     if i < 5:
-#         circuit.x(quantum_r[i])
-#     else:
-#         circuit.iden(quantum_r[i])
-#
-# for i in range(9):
-#     if i < 5:
-#         circuit.iden(quantum_r[i])
-#     else:
-#         circuit.x(quantum_r[i])
+for i in range(16):
+    if i < 9:
+        circuit.x(quantum_r[i])
+    else:
+        circuit.iden(quantum_r[i])
+
+for i in range(16):
+    if i < 9:
+        circuit.iden(quantum_r[i])
+    else:
+        circuit.x(quantum_r[i])
 
 for i in range(n_qubits):
     circuit.measure(quantum_r[i], classical_r[i])
@@ -98,7 +107,7 @@ circuits = ["Circuit"]  # Group of circuits to execute
 
 Q_program.set_api(Qconfig.APItoken, Qconfig.config["url"])  # set the APIToken and API url
 
-result = Q_program.execute(circuits, 'ibmqx_qasm_simulator', wait=2, timeout=480, shots=1024, max_credits=10, coupling_map=coupling_map_16, silent=False)
+result = Q_program.execute(circuits, 'ibmqx_qasm_simulator', wait=2, timeout=1000, shots=1024, max_credits=10, coupling_map=coupling_map_qx5, silent=False)
 
 counts = result.get_counts("Circuit")
 
@@ -106,7 +115,7 @@ print(counts)
 
 sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 
-out_f = open('re-mapper_ibmqx3' + '_' + str(8192) + '_' + str(n_qubits) + '_qubits_envariance.txt', 'w')
+out_f = open('re-mapper_ibmqx_simulator' + '_' + str(1024) + '_' + str(n_qubits) + '_qubits_envariance.txt', 'w')
 
 # store counts in txt file and xlsx file
 out_f.write('VALUES\t\tCOUNTS\n\n')
