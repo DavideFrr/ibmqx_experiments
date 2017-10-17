@@ -160,7 +160,7 @@ def launch_exp(workbook_name, device, utility, n_qubits, oracle='11', num_shots=
 
     sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 
-    filename = 'Data_Parity/' + device + '/' + oracle + '/' + device + '_' + str(num_shots) + 'queries_' + oracle + '_' + str(
+    filename = 'Data_Parity/500/' + device + '/' + oracle + '/' + device + '_' + str(num_shots) + 'queries_' + oracle + '_' + str(
         n_qubits) + '_qubits_parity.txt'
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     out_f = open(filename, 'w')
@@ -247,7 +247,7 @@ def launch_exp(workbook_name, device, utility, n_qubits, oracle='11', num_shots=
             row += 1
     error = (1 - (correct / total))
 
-    filename = 'Data_Parity/' + device + '/' + oracle + '/' + device + '_' + oracle + '_' + str(
+    filename = 'Data_Parity/500/' + device + '/' + oracle + '/' + device + '_' + oracle + '_' + str(
         n_qubits) + '_qubits_parity.txt'
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     out_f = open(filename, 'a')
@@ -262,7 +262,7 @@ def launch_exp(workbook_name, device, utility, n_qubits, oracle='11', num_shots=
     wb.close()
 
 
-shots = 200
+shots = 500
 
 oracles = [
     '00',
@@ -275,7 +275,7 @@ oracles = [
 logger.info('Started')
 
 utility = Utility(coupling_map_qx5)
-directory = 'Data_Parity/'
+directory = 'Data_Parity/500/'
 os.makedirs(os.path.dirname(directory), exist_ok=True)
 
 for oracle in oracles:
