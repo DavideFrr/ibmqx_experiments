@@ -1,11 +1,7 @@
 # IBMQX Experiments
 The purpose of this repository is to demonstrate entanglement assisted invariance,
-also known as envariance, and parity learning,
+also known as envariance, and parity learning by querying a uniform quantum example oracle,
 using IBM QX series quantum computers.
-
-Here you will find not only the code needed to run the experiments yourself,
-but also the results of ours
-(in case you don't have the time or patience and just want to see the data).
 
 ## Requirements
 
@@ -19,33 +15,37 @@ and have at least 5 credits on that account.
 
 ## Utility
 
+The core of the problem is to find the qubit that is most connected;
+by most connected we mean that it can be connected (directly or not) by means of cnot gates
+to as many other qubits as possible.
+
 [utility.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/utility.py)
 contains all the functions needed to find the most connected qubit, given coupling-map,
 and than proceed to create the circuits for envariance demonstration and parity learning respectivly.
 
-As already mentioned, the core of the problem is to find the qubit that is most connected;
-by most connected we mean that it can be connected (directly or not) by means of cnot gates
-to as many other qubits as possible.
+We have designed an algorithm that, given the map and the number of qubits to be used in the experiment,
+finds the most connected qubit and start building the GHZ circuit from that qubit. By most connected,
+we mean that the qubit can be reached by as many other qubits as possible
+through directed paths in the coupling map.
 
-The algorithm starts from a source node and explores the paths that goes from there,
-every time a new node is reached, it’s added to the list of visited ones from the previously
-mentioned source node and a counter for the visited node is incremented by one. If during
-the exploration of the paths exiting from the current source node an already visited node
-is reached, the algorithm ignores it and goes back to the previous one (if we have already
-visited that ode starting from the current source, than every path that goes from it has
-already been explored or is going to be).
+The objective is to assign every node _x_ a rank, defined as the number of nodes
+that can reach _x_ along the directed edges of the coupling map.
+The node with the highest rank is then selected as the starting point for building the circuit.
 
 All of the above is done by the [explore()](https://github.com/DavideFrr/ibmqx_experiments/blob/5ce0942c3b50fe4455d19118e54a391c6cdccfa2/utility.py#L55)
-method which is called by the [ranking()](https://github.com/DavideFrr/ibmqx_experiments/blob/5ce0942c3b50fe4455d19118e54a391c6cdccfa2/utility.py#L66)
-method, whose objective is to assign a rank (the counter incremented when a node is reached) to
+function which is called by [ranking()](https://github.com/DavideFrr/ibmqx_experiments/blob/5ce0942c3b50fe4455d19118e54a391c6cdccfa2/utility.py#L66),
+whose objective is to assign a rank (the counter incremented when a node is reached) to
 every node based on how many nodes can reach it. The node with the higher rank will be
 selected as the start point for building our circuit.
 
-After the most connected node/qubit has been found, the [create_path()](https://github.com/DavideFrr/ibmqx_experiments/blob/5ce0942c3b50fe4455d19118e54a391c6cdccfa2/utility.py#L97)
-method explores the map backwards and ﬁrst connects all the qubits for which a classic CNOT gate is feasible.
-Then, it starts connecting the other qubits with inverse-CNOT gates.
-In this way, we can keep the number of gates to a minimum, assuming that every gate
-we add to the circuit brings a certain amount of error with it.
+As soon as the most connected qubit has been found, the [create_path()] function is executed,
+in order to obtain a path connecting all the qubits that must be involved in the GHZ circuit.
+
+The [place_cnot()] function walks the aforementioned path and uses the [cnot()] function
+to put across each node pair either a CNOT or an inverse-CNOT gate,
+depending on the direction of the link dictated by the coupling map.
+Parameter _[k]_ in [place_cnot()] allows to reuse the function to build other circuits
+than GHZ. More specifically, _k=11_ corresponds to the GHZ circuit.
 
 
 _ibmqx5 coupling-map graphic rapresentation_:
@@ -74,14 +74,42 @@ coupling_map_qx5 = {
 ```
 
 
-Below the portion of the coupling-map selected by utility.py:
-# ![qx5_circ_map](images/qx5_circ_map.png)
+_Couplings between qubits in the resulting circuits, for QX4 and QX5 respectively:_
+# ![qx4_circ_map](images/qx4_circ_map.png)![qx5_circ_map](images/qx5_circ_map.png)
 _Red arrows means the use of inverse cnot_
 
 ## Envariance
 
-... ...
+[envariance.py] is were you'll find all you need to tun envariance experiments; the [launch_exp()]
+function will run the circuit for the given number of qubit, shots and coupling-map on the given
+device.
+
+After obtaining the GHZ state, envariance can be experimented by performing a swap,
+using Pauli-X gates, on the first
+![n/2](http://latex.codecogs.com/gif.latex?\left&space;\lceil&space;n/2&space;\right&space;\rceil)
+and after that another swap
+to the remaining
+![n/2](http://latex.codecogs.com/gif.latex?\left&space;\lfloor&space;n/2&space;\right&space;\rfloor)
+qubits.
+
+All results of the executions will be stored in txt and xlsx files for later use.
+More info in the code.
+
+# ![qx4_5-qubits_env_circ](images/qx4_5-qubits_env_circ.png)
+# ![qx5_16-qubits_env_circ](images/qx5_16-qubits_env_circ.png)
+_Envariance circuits with 5 qubits and 16 qubits, for QX4 and QX5 respectively_
 
 ## Parity
 
-... ...
+[parity.py] will run parity learning experiments; the [launch_exp()]
+function will run the circuit for the given number of qubit, queries, coupling-map and _k_;
+_k_ can either be '11', '10' or '00' and represent the type of string that will be learned
+by the oracle.
+
+All results of the executions will be stored in txt and xlsx files for later use.
+More info in the code.
+
+# ![qx5_16-qubits_par-00_circ](images/qx5_16-qubits_par-00_circ.png)
+# ![qx5_16-qubits_par-10_circ](images/qx5_16-qubits_par-10_circ.png)
+# ![qx5_16-qubits_par-11_circ](images/qx5_16-qubits_par-11_circ.png)
+_Parity circuits with 15 qubits on QX5, for k='00', k='10' and k='11' respectively_
