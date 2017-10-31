@@ -17,7 +17,7 @@ logger.propagate = False
 
 class Utility(object):
     __coupling_map = dict()
-    __inverse_coupling_map = dict()
+    # __inverse_coupling_map = dict()
     __plain_map = dict()
     __path = dict()
     __n_qubits = 0
@@ -29,17 +29,20 @@ class Utility(object):
         if coupling_map:
             self.__coupling_map = coupling_map.copy()
             logger.log(logging.DEBUG, 'init() - coupling_map:\n%s', str(self.__coupling_map))
-            self.invert_graph(coupling_map, self.__inverse_coupling_map)
-            logger.log(logging.DEBUG, 'init() - inverse coupling map:\n%s', str(self.__inverse_coupling_map))
+            # self.invert_graph(coupling_map, self.__inverse_coupling_map)
+            # logger.log(logging.DEBUG, 'init() - inverse coupling map:\n%s', str(self.__inverse_coupling_map))
             for i in coupling_map:
-                self.__plain_map.update({i: coupling_map[i]})
+                # self.__plain_map.update({i: coupling_map[i]})
+                controlled = coupling_map[i];
+                self.__plain_map.update({i: []})
                 for j in coupling_map:
                     if i in coupling_map[j]:
                         self.__plain_map[i] = self.__plain_map[i] + [j]
+                self.__plain_map[i] = self.__plain_map[i] + controlled
             logger.log(logging.DEBUG, 'init() - plain map:\n%s', str(self.__plain_map))
             self.ranking(self.__coupling_map, self.__ranks)
             self.__most_connected = self.find_max(self.__ranks)
-            self.create_path(self.__most_connected[0], inverse_map=self.__inverse_coupling_map,
+            self.create_path(self.__most_connected[0],  # inverse_map=self.__inverse_coupling_map,
                              plain_map=self.__plain_map)
         else:
             logger.critical('init() - Null argument: coupling_map')
@@ -47,7 +50,7 @@ class Utility(object):
 
     def close(self):
         self.__ranks.clear()
-        self.__inverse_coupling_map.clear()
+        # self.__inverse_coupling_map.clear()
         self.__coupling_map.clear()
         self.__path.clear()
         self.__most_connected.clear()
@@ -61,7 +64,7 @@ class Utility(object):
                 ranks[next] = ranks[next] + 1
                 self.explore(source, next, visited, ranks)
 
-    # TODO Try using some sort of "page-ranking like" algorithm
+    # TODO Try using some sort of centrality algorithm
 
     def ranking(self, graph, ranks):
         visited = dict()
@@ -94,21 +97,22 @@ class Utility(object):
         return found
 
     # create a valid path that connect qubits used in the circuit
-    def create_path(self, start, inverse_map, plain_map):
+    def create_path(self, start, plain_map,  # inverse_map
+                    ):
         self.__path.update({start: -1})
-        to_connect = [start] + inverse_map[start]
+        to_connect = [start] + plain_map[start]
         count = len(self.__coupling_map) - 1
-        for visiting in to_connect:
-            if count <= 0:
-                break
-            for node in inverse_map[visiting]:
-                if count <= 0:
-                    break
-                if node not in self.__path:
-                    self.__path.update({node: visiting})
-                    if node not in to_connect:
-                        to_connect.append(node)
-                    count -= 1
+        # for visiting in to_connect:
+        #     if count <= 0:
+        #         break
+        #     for node in inverse_map[visiting]:
+        #         if count <= 0:
+        #             break
+        #         if node not in self.__path:
+        #             self.__path.update({node: visiting})
+        #             if node not in to_connect:
+        #                 to_connect.append(node)
+        #             count -= 1
         changed = True
         while changed is True and count > 0:
             changed = False
@@ -122,6 +126,7 @@ class Utility(object):
                         self.__path.update({node: visiting})
                         if node not in to_connect:
                             to_connect.append(node)
+                            changed = True;
                         count -= 1
         logger.debug('create_path() - path:\n%s', str(self.__path))
 

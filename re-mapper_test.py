@@ -6,6 +6,8 @@ August 2017
 This is to test the auto re-mapping functionality of QISKit on ibmqx3
 """
 
+import logging
+import myLogger
 import sys
 
 sys.path.append(  # solve the relative dependencies if you clone QISKit from the Git repo and use like a global.
@@ -14,6 +16,24 @@ sys.path.append(  # solve the relative dependencies if you clone QISKit from the
 from qiskit import QuantumProgram
 import Qconfig
 import operator
+
+logger = logging.getLogger('envariance')
+logger.addHandler(myLogger.MyHandler())
+logger.setLevel(logging.INFO)
+logger.propagate = False
+
+# Back-end devices
+qx2 = 'ibmqx2'
+
+qx3 = 'ibmqx3'
+
+qx4 = 'ibmqx4'
+
+qx5 = 'ibmqx5'
+
+online_sim = 'ibmqx_qasm_simulator'
+
+local_sim = 'local_qasm_simulator'
 
 coupling_map_qx4 = {
     0: [],
@@ -42,80 +62,95 @@ coupling_map_qx5 = {
     15: [0, 2, 14],
 }
 
-Q_SPECS = {
-    "circuits": [{
-        "name": "Circuit",
-        "quantum_registers": [{
-            "name": "qr",
-            "size": 16
-        }],
-        "classical_registers": [{
-            "name": "cr",
-            "size": 16
-        }]}],
-}
+size = 0
 
-Q_program = QuantumProgram(specs=Q_SPECS)
-
-# Get the components.
-
-# get the circuit by Name
-circuit = Q_program.get_circuit("Circuit")
-
-# get the Quantum Register by Name
-quantum_r = Q_program.get_quantum_register("qr")
-
-# get the Classical Register by Name
-classical_r = Q_program.get_classical_register('cr')
+device = qx5
 
 # Number of qubits to be used
 n_qubits = 16
 
-for i in range(n_qubits):
-    if i != 0:
+if device == qx2 or device == qx4:
+    if n_qubits <= 5:
+        size = 5
+        # device = 'ibmqx_qasm_simulator'
+    else:
+        logger.critical('launch_exp() - Too much qubits for %s !', device)
+        exit(1)
+elif device == qx3 or device == qx5:
+    if n_qubits <= 16:
+        size = 16
+        # device = 'ibmqx_qasm_simulator'
+    else:
+        logger.critical('launch_exp() - Too much qubits for %s !', device)
+        exit(2)
+elif device == online_sim:
+    if n_qubits <= 5:
+        size = 5
+    elif n_qubits <= 16:
+        size = 16
+    else:
+        logger.critical('launch_exp() - Unknown device.')
+        exit(3)
+
+s_0 = n_qubits // 2
+
+Q_program = QuantumProgram()
+
+Q_program.set_api(Qconfig.APItoken, Qconfig.config["url"])  # set the APIToken and API url
+
+quantum_r = Q_program.create_quantum_register("qr", size)
+
+classical_r = Q_program.create_classical_register("cr", size)
+
+circuit = Q_program.create_circuit("re-mapper", [quantum_r], [classical_r])
+
+for i in range(0, n_qubits):
+    if i != s_0:
         circuit.h(quantum_r[i])
     else:
         circuit.x(quantum_r[i])
 
-for i in range(n_qubits):
-    if i != 0:
-        circuit.cx(quantum_r[i], quantum_r[0])
+for i in range(0, n_qubits):
+    if i != s_0:
+        circuit.cx(quantum_r[i], quantum_r[s_0])
 
-for i in range(n_qubits):
+for i in range(0, n_qubits):
     circuit.h(quantum_r[i])
 
-for i in range(16):
-    if i < 9:
-        circuit.x(quantum_r[i])
-    else:
-        circuit.iden(quantum_r[i])
+# for i in range(n_qubits):
+#     if i < s_0:
+#         circuit.iden(quantum_r[i])
+#     else:
+#         circuit.x(quantum_r[i])
+#
+# for i in range(n_qubits):
+#     if i < s_0:
+#         circuit.x(quantum_r[i])
+#     else:
+#         circuit.iden(quantum_r[i])
 
-for i in range(16):
-    if i < 9:
-        circuit.iden(quantum_r[i])
-    else:
-        circuit.x(quantum_r[i])
-
-for i in range(n_qubits):
+for i in range(0, n_qubits):
     circuit.measure(quantum_r[i], classical_r[i])
 
-QASM_source = Q_program.get_qasm("Circuit")
+QASM_source = Q_program.get_qasm("re-mapper")
 
-print(QASM_source)
+logger.info('launch_exp() - QASM:\n%s', str(QASM_source))
 
-circuits = ["Circuit"]  # Group of circuits to execute
+result = Q_program.execute(["re-mapper"], backend=device, wait=2, timeout=5000, shots=8192, max_credits=10, coupling_map=coupling_map_qx5)
 
-Q_program.set_api(Qconfig.APItoken, Qconfig.config["url"])  # set the APIToken and API url
+QASM_source = Q_program.get_qasm("re-mapper")
 
-result = Q_program.execute(circuits, 'ibmqx_qasm_simulator', wait=2, timeout=1000, shots=1024, max_credits=10, coupling_map=coupling_map_qx5, silent=False)
+print(result.get_ran_qasm('re-mapper'))
 
-counts = result.get_counts("Circuit")
+print(result)
 
-print(counts)
+counts = result.get_counts("re-mapper")
+
+logger.debug('launch_exp() - counts:\n%s', str(counts))
 
 sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 
-out_f = open('re-mapper_ibmqx_simulator' + '_' + str(1024) + '_' + str(n_qubits) + '_qubits_envariance.txt', 'w')
+out_f = open('re-mapper_' + device + '_' + str(8192) + '_' + str(n_qubits) + '_qubits_envariance.txt', 'w')
 
 # store counts in txt file and xlsx file
 out_f.write('VALUES\t\tCOUNTS\n\n')

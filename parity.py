@@ -5,18 +5,16 @@ August 2017
 
 """
 
-
 import logging
 
 from os.path import expanduser
 
 import xlrd
 
-import  myLogger
+import myLogger
 import os
 import operator
 import xlsxwriter
-import time
 
 from utility import Utility
 
@@ -27,7 +25,6 @@ sys.path.append(  # solve the relative dependencies if you clone QISKit from the
 
 import Qconfig
 from qiskit import QuantumProgram
-
 
 logger = logging.getLogger('envariance')
 logger.addHandler(myLogger.MyHandler())
@@ -103,7 +100,7 @@ local_sim = 'local_qasm_simulator'
 
 
 # launch envariance experiment on the given device
-def launch_exp(workbook_name, device, utility, n_qubits, oracle='11', num_shots=1024):
+def launch_exp(execution, queries, workbook_name, device, utility, n_qubits, oracle='11', num_shots=1024):
     size = 0
     home = expanduser("~")
 
@@ -142,25 +139,26 @@ def launch_exp(workbook_name, device, utility, n_qubits, oracle='11', num_shots=
 
     classical_r = Q_program.create_classical_register("cr", size)
 
-    circuit = Q_program.create_circuit("parity", [quantum_r], [classical_r])
+    circuit = Q_program.create_circuit('parity', [quantum_r], [classical_r])
 
     utility.parity(circuit=circuit, quantum_r=quantum_r, classical_r=classical_r, n_qubits=n_qubits, oracle=oracle,
                    connected=ordered_q)
 
-    QASM_source = Q_program.get_qasm("parity")
+    QASM_source = Q_program.get_qasm('parity')
 
     logger.info('launch_exp() - QASM:\n%s', str(QASM_source))
 
-    result = Q_program.execute(["parity"], backend=device, wait=2, timeout=5000, shots=num_shots, max_credits=10,
-                               silent=False)
+    result = Q_program.execute(['parity'], backend=device, wait=2, timeout=5000, shots=num_shots, max_credits=10)
 
-    counts = result.get_counts("parity")
+    counts = result.get_counts('parity')
 
     logger.debug('launch_exp() - counts:\n%s', str(counts))
 
     sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 
-    filename = 'Data_Parity/500/' + device + '/' + oracle + '/' + device + '_' + str(num_shots) + 'queries_' + oracle + '_' + str(
+    filename = 'Data_Parity/' + str(queries) + '/' + device + '/' + oracle + '/' + 'execution' + str(
+        execution) + '/' + device + '_' + str(
+        num_shots) + 'queries_' + oracle + '_' + str(
         n_qubits) + '_qubits_parity.txt'
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     out_f = open(filename, 'w')
@@ -179,7 +177,7 @@ def launch_exp(workbook_name, device, utility, n_qubits, oracle='11', num_shots=
             sorted_v.append(reverse[ordered_q[n + 1]])
             logger.log(logging.VERBOSE, 'launch_exp() - ordered_q[n+1], sorted_v[n+1] in 2nd for loop: %s,%s',
                        str(ordered_q[n + 1]), str(sorted_v[n + 1]))
-            if (n+stop+1) != n_qubits:
+            if (n + stop + 1) != n_qubits:
                 sorted_v.append(reverse[ordered_q[n + stop + 1]])
                 logger.log(logging.VERBOSE, 'launch_exp() - ordered_q[n+stop+1], sorted_v[n+2] in 2nd for loop: %s%s',
                            str(ordered_q[n + stop + 1]), str(sorted_v[n + 2]))
@@ -247,7 +245,8 @@ def launch_exp(workbook_name, device, utility, n_qubits, oracle='11', num_shots=
             row += 1
     error = (1 - (correct / total))
 
-    filename = 'Data_Parity/500/' + device + '/' + oracle + '/' + device + '_' + oracle + '_' + str(
+    filename = 'Data_Parity/' + str(queries) + '/' + device + '/' + oracle + '/' + 'execution' + str(
+        execution) + '/' + device + '_' + oracle + '_' + str(
         n_qubits) + '_qubits_parity.txt'
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     out_f = open(filename, 'a')
@@ -262,7 +261,9 @@ def launch_exp(workbook_name, device, utility, n_qubits, oracle='11', num_shots=
     wb.close()
 
 
-shots = 500
+executions = 5
+
+queries = 500
 
 oracles = [
     '00',
@@ -271,36 +272,32 @@ oracles = [
 ]
 
 # launch_exp takes the argument device which can either be qx2, qx3, online_sim or local_sim
-# oracle is the srting you wont to learn: '10' for '10...10', '11' for '11...11', '00' for '00...00'
+# oracle is the string you want to learn: '10' for '10...10', '11' for '11...11', '00' for '00...00'
 logger.info('Started')
 
 utility = Utility(coupling_map_qx5)
-directory = 'Data_Parity/500/'
+directory = 'Data_Parity/' + str(queries) + '/'
 os.makedirs(os.path.dirname(directory), exist_ok=True)
 
-for oracle in oracles:
-    workbook_name = directory + 'ibmqx4_n_qubits_' + oracle + '_parity.xlsx'
+for execution in range(1, executions + 1, 1):
 
-    # Comment this two lines if you've already created the file in a previous execution
-    workbook = xlsxwriter.Workbook(workbook_name)
-    workbook.close()
+    for oracle in oracles:
+        workbook_name = directory + '/' + 'execution' + str(
+            execution) + '_' + 'ibmqx5_n_qubits_' + oracle + '_parity.xlsx'
 
-    for n_shots in range(10, (shots+10), 10):
-        launch_exp(workbook_name, qx5, utility, n_qubits=3, oracle=oracle, num_shots=n_shots)
-        time.sleep(2)
-        launch_exp(workbook_name, qx5, utility, n_qubits=5, oracle=oracle, num_shots=n_shots)
-        time.sleep(2)
-        launch_exp(workbook_name, qx5, utility, n_qubits=7, oracle=oracle, num_shots=n_shots)
-        time.sleep(2)
-        launch_exp(workbook_name, qx5, utility, n_qubits=9, oracle=oracle, num_shots=n_shots)
-        time.sleep(2)
-        launch_exp(workbook_name, qx5, utility, n_qubits=12, oracle=oracle, num_shots=n_shots)
-        time.sleep(2)
-        launch_exp(workbook_name, qx5, utility, n_qubits=14, oracle=oracle, num_shots=n_shots)
-        time.sleep(2)
-        launch_exp(workbook_name, qx5, utility, n_qubits=16, oracle=oracle, num_shots=n_shots)
-        time.sleep(2)
+        # Comment this two lines if you've already created the file in a previous execution
+        workbook = xlsxwriter.Workbook(workbook_name)
+        workbook.close()
 
-utility.close()
+        for n_queries in range(10, (queries + 10), 10):
+            launch_exp(execution, queries, workbook_name, qx5, utility, n_qubits=3, oracle=oracle, num_shots=n_queries)
+            # launch_exp(execution, queries, workbook_name, qx5, utility, n_qubits=5, oracle=oracle, num_shots=n_queries)
+            # launch_exp(execution, queries, workbook_name, qx5, utility, n_qubits=7, oracle=oracle, num_shots=n_queries)
+            launch_exp(execution, queries, workbook_name, qx5, utility, n_qubits=9, oracle=oracle, num_shots=n_queries)
+            # launch_exp(execution, queries, workbook_name, qx5, utility, n_qubits=12, oracle=oracle, num_shots=n_queries)
+            # launch_exp(execution, queries, workbook_name, qx5, utility, n_qubits=14, oracle=oracle, num_shots=n_queries)
+            launch_exp(execution, queries, workbook_name, qx5, utility, n_qubits=16, oracle=oracle, num_shots=n_queries)
+
+    utility.close()
 
 logger.info('All done.')
