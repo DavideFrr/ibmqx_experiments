@@ -32,21 +32,27 @@ The objective is to assign every node _x_ a rank, defined as the number of nodes
 that can reach _x_ along the directed edges of the coupling map.
 The node with the highest rank is then selected as the starting point for building the circuit.
 
-All of the above is done by the [explore()](https://github.com/DavideFrr/ibmqx_experiments/blob/5ce0942c3b50fe4455d19118e54a391c6cdccfa2/utility.py#L55)
-function which is called by [ranking()](https://github.com/DavideFrr/ibmqx_experiments/blob/5ce0942c3b50fe4455d19118e54a391c6cdccfa2/utility.py#L66),
+All of the above is done by the [explore()](https://github.com/DavideFrr/ibmqx_experiments/blob/491fa055c50d60c30d79995a3aabdac52e4c8e17/utility.py#L58)
+function which is called by [ranking()](https://github.com/DavideFrr/ibmqx_experiments/blob/491fa055c50d60c30d79995a3aabdac52e4c8e17/utility.py#L69),
 whose objective is to assign a rank (the counter incremented when a node is reached) to
 every node based on how many nodes can reach it. The node with the higher rank will be
 selected as the start point for building our circuit.
 
-As soon as the most connected qubit has been found, the [create_path()] function is executed,
-in order to obtain a path connecting all the qubits that must be involved in the GHZ circuit.
+As soon as the most connected qubit has been found, the [create_path()](https://github.com/DavideFrr/ibmqx_experiments/blob/491fa055c50d60c30d79995a3aabdac52e4c8e17/utility.py#L100)
+function is executed, in order to obtain a path connecting all the qubits
+that must be involved in the GHZ circuit.
 
-The [place_cnot()] function walks the aforementioned path and uses the [cnot()] function
-to put across each node pair either a CNOT or an inverse-CNOT gate,
+The [place_cnot()](https://github.com/DavideFrr/ibmqx_experiments/blob/491fa055c50d60c30d79995a3aabdac52e4c8e17/utility.py#L149)
+function walks the aforementioned path and uses the [cnot()](https://github.com/DavideFrr/ibmqx_experiments/blob/491fa055c50d60c30d79995a3aabdac52e4c8e17/utility.py#L133)
+function to put across each node pair either a CNOT or an inverse-CNOT gate,
 depending on the direction of the link dictated by the coupling map.
-Parameter _[k]_ in [place_cnot()] allows to reuse the function to build other circuits
+Parameter _k_ in [place_cnot()](https://github.com/DavideFrr/ibmqx_experiments/blob/491fa055c50d60c30d79995a3aabdac52e4c8e17/utility.py#L149)
+allows to reuse the function to build other circuits
 than GHZ. More specifically, _k=11_ corresponds to the GHZ circuit.
 
+Before launching an experiment on a specific device, you'll have to create a new [Utility()] object,
+the constructor takes the device coupling-map as a parameter; when you're done experimenting with that device you'll
+then need to [close()] the Utility object.
 
 _ibmqx5 coupling-map graphic rapresentation_:
 # ![qx5_coupling-map](images/qx5_coupling-map.png)

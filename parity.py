@@ -260,6 +260,11 @@ def launch_exp(execution, queries, workbook_name, device, utility, n_qubits, ora
 
     wb.close()
 
+# device is the device you want to run the experiment on
+# executions is the number of different experiment you want to run
+# queries is the maximum number of queries, starting from 10 and increasing by 10
+# oracles are the strings you want to learn: '10' for '10...10', '11' for '11...11', '00' for '00...00'
+device = qx5
 
 executions = 5
 
@@ -272,7 +277,6 @@ oracles = [
 ]
 
 # launch_exp takes the argument device which can either be qx2, qx3, online_sim or local_sim
-# oracle is the string you want to learn: '10' for '10...10', '11' for '11...11', '00' for '00...00'
 logger.info('Started')
 
 utility = Utility(coupling_map_qx5)
@@ -283,12 +287,13 @@ for execution in range(1, executions + 1, 1):
 
     for oracle in oracles:
         workbook_name = directory + '/' + 'execution' + str(
-            execution) + '_' + 'ibmqx5_n_qubits_' + oracle + '_parity.xlsx'
+            execution) + '_' + device + '_n_qubits_' + oracle + '_parity.xlsx'
 
         # Comment this two lines if you've already created the file in a previous execution
         workbook = xlsxwriter.Workbook(workbook_name)
         workbook.close()
 
+        # Comment the experiments you don't want to run
         for n_queries in range(10, (queries + 10), 10):
             launch_exp(execution, queries, workbook_name, qx5, utility, n_qubits=3, oracle=oracle, num_shots=n_queries)
             # launch_exp(execution, queries, workbook_name, qx5, utility, n_qubits=5, oracle=oracle, num_shots=n_queries)
