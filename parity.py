@@ -9,12 +9,12 @@ import logging
 
 from os.path import expanduser
 
-import xlrd
+# import xlrd
 
 import myLogger
 import os
 import operator
-import xlsxwriter
+# import xlsxwriter
 
 from utility import Utility
 
@@ -100,7 +100,7 @@ local_sim = 'local_qasm_simulator'
 
 
 # launch envariance experiment on the given device
-def launch_exp(execution, queries, workbook_name, device, utility, n_qubits, oracle='11', num_shots=1024):
+def launch_exp(execution, queries, device, utility, n_qubits, oracle='11', num_shots=1024):
     size = 0
     home = expanduser("~")
 
@@ -187,30 +187,30 @@ def launch_exp(execution, queries, workbook_name, device, utility, n_qubits, ora
 
     out_f.close()
 
-    wbRD = xlrd.open_workbook(workbook_name.format(home))
-    sheets = wbRD.sheets()
-
-    wb = xlsxwriter.Workbook(workbook_name.format(home))
-
-    for sheet in sheets:  # write data from old file
-        newSheet = wb.add_worksheet(sheet.name)
-        for row in range(sheet.nrows):
-            for col in range(sheet.ncols):
-                newSheet.write(row, col, sheet.cell(row, col).value)
-
-    sheet = str(num_shots) + '_' + str(n_qubits)
-
-    worksheet = wb.add_worksheet(sheet)
-    bold = wb.add_format({'bold': True})
-    binary = wb.add_format()
-    binary.set_num_format_index('00000')
-
-    worksheet.write(0, 0, 'Values', bold)
-    worksheet.write(0, 1, 'Counts', bold)
-    worksheet.write(0, 2, 'Probability', bold)
-    worksheet.write(0, 3, 'Error', bold)
-    row = 1
-    col = 0
+    # wbRD = xlrd.open_workbook(workbook_name.format(home))
+    # sheets = wbRD.sheets()
+    #
+    # wb = xlsxwriter.Workbook(workbook_name.format(home))
+    #
+    # for sheet in sheets:  # write data from old file
+    #     newSheet = wb.add_worksheet(sheet.name)
+    #     for row in range(sheet.nrows):
+    #         for col in range(sheet.ncols):
+    #             newSheet.write(row, col, sheet.cell(row, col).value)
+    #
+    # sheet = str(num_shots) + '_' + str(n_qubits)
+    #
+    # worksheet = wb.add_worksheet(sheet)
+    # bold = wb.add_format({'bold': True})
+    # binary = wb.add_format()
+    # binary.set_num_format_index('00000')
+    #
+    # worksheet.write(0, 0, 'Values', bold)
+    # worksheet.write(0, 1, 'Counts', bold)
+    # worksheet.write(0, 2, 'Probability', bold)
+    # worksheet.write(0, 3, 'Error', bold)
+    # row = 1
+    # col = 0
     total = 0
     correct = 0
     zero = '0'
@@ -232,9 +232,9 @@ def launch_exp(execution, queries, workbook_name, device, utility, n_qubits, ora
 
     for i in results:
         if i[0] != '0':
-            worksheet.write(row, col, i, binary)
-            worksheet.write(row, col + 1, results[i])
-            worksheet.write(row, col + 2, results[i] / num_shots)
+            # worksheet.write(row, col, i, binary)
+            # worksheet.write(row, col + 1, results[i])
+            # worksheet.write(row, col + 2, results[i] / num_shots)
             total += results[i]
             if i == one_zero and oracle == '00':
                 correct = results[i]
@@ -242,7 +242,7 @@ def launch_exp(execution, queries, workbook_name, device, utility, n_qubits, ora
                 correct = results[i]
             if i == one_one_zero and oracle == '10':
                 correct = results[i]
-            row += 1
+                # row += 1
     error = (1 - (correct / total))
 
     filename = 'Data_Parity/' + str(queries) + '/' + device + '/' + oracle + '/' + 'execution' + str(
@@ -255,10 +255,10 @@ def launch_exp(execution, queries, workbook_name, device, utility, n_qubits, ora
     out_f.write(str(num_shots) + '\t' + str(error) + '\n')
     out_f.close()
 
-    worksheet.write(row, col + 1, total)
-    worksheet.write(1, 3, error)
-
-    wb.close()
+    # worksheet.write(row, col + 1, total)
+    # worksheet.write(1, 3, error)
+    #
+    # wb.close()
 
 
 # device is the device you want to run the experiment on
@@ -269,7 +269,7 @@ device = qx5
 
 executions = 5
 
-queries = 500
+queries = 1000
 
 oracles = [
     '00',
@@ -287,25 +287,22 @@ os.makedirs(os.path.dirname(directory), exist_ok=True)
 for execution in range(1, executions + 1, 1):
 
     for oracle in oracles:
-        workbook_name = directory + '/' + 'execution' + str(
-            execution) + '_' + device + '_n_qubits_' + oracle + '_parity.xlsx'
+        # workbook_name = directory + '/' + 'execution' + str(
+        #     execution) + '_' + device + '_n_qubits_' + oracle + '_parity.xlsx'
 
         # Comment this two lines if you've already created the file in a previous execution
-        workbook = xlsxwriter.Workbook(workbook_name)
-        workbook.close()
+        # workbook = xlsxwriter.Workbook(workbook_name)
+        # workbook.close()
 
         # Comment the experiments you don't want to run
-        for n_queries in range(10, (queries + 10), 10):
-            launch_exp(execution, queries, workbook_name, device, utility, n_qubits=3, oracle=oracle,
-                       num_shots=n_queries)
-            # launch_exp(execution, queries, workbook_name, device, utility, n_qubits=5, oracle=oracle, num_shots=n_queries)
-            # launch_exp(execution, queries, workbook_name, device, utility, n_qubits=7, oracle=oracle, num_shots=n_queries)
-            launch_exp(execution, queries, workbook_name, device, utility, n_qubits=9, oracle=oracle,
-                       num_shots=n_queries)
-            # launch_exp(execution, queries, workbook_name, device, utility, n_qubits=12, oracle=oracle, num_shots=n_queries)
-            # launch_exp(execution, queries, workbook_name, device, utility, n_qubits=14, oracle=oracle, num_shots=n_queries)
-            launch_exp(execution, queries, workbook_name, device, utility, n_qubits=16, oracle=oracle,
-                       num_shots=n_queries)
+        for n_queries in range(1000, (queries + 10), 10):
+            launch_exp(execution, queries, device, utility, n_qubits=3, oracle=oracle, num_shots=n_queries)
+            # launch_exp(execution, queries, device, utility, n_qubits=5, oracle=oracle, num_shots=n_queries)
+            # launch_exp(execution, queries, device, utility, n_qubits=7, oracle=oracle, num_shots=n_queries)
+            launch_exp(execution, queries, device, utility, n_qubits=9, oracle=oracle, num_shots=n_queries)
+            # launch_exp(execution, queries, device, utility, n_qubits=12, oracle=oracle, num_shots=n_queries)
+            # launch_exp(execution, queries, device, utility, n_qubits=14, oracle=oracle, num_shots=n_queries)
+            launch_exp(execution, queries, device, utility, n_qubits=16, oracle=oracle, num_shots=n_queries)
 
 utility.close()
 
