@@ -32,8 +32,7 @@ The objective is to assign every node _x_ a rank, defined as the number of nodes
 that can reach _x_ along the directed edges of the coupling map.
 The node with the highest rank is then selected as the starting point for building the circuit.
 
-All of the above is done by the [explore()](https://github.com/DavideFrr/ibmqx_experiments/blob/491fa055c50d60c30d79995a3aabdac52e4c8e17/utility.py#L58)
-function which is called by [ranking()](https://github.com/DavideFrr/ibmqx_experiments/blob/491fa055c50d60c30d79995a3aabdac52e4c8e17/utility.py#L69),
+All of the above is done by the [explore()](https://github.com/DavideFrr/ibmqx_experiments/blob/491fa055c50d60c30d79995a3aabdac52e4c8e17/utility.py#L58),
 whose objective is to assign a rank (the counter incremented when a node is reached) to
 every node based on how many nodes can reach it. The node with the higher rank will be
 selected as the start point for building our circuit.
@@ -93,8 +92,7 @@ device.
 After obtaining the GHZ state, envariance can be experimented by performing a swap,
 using Pauli-X gates, on the first
 ![n/2](http://latex.codecogs.com/gif.latex?\left&space;\lceil&space;n/2&space;\right&space;\rceil)
-and after that another swap
-to the remaining
+and after that another swap to the remaining
 ![n/2](http://latex.codecogs.com/gif.latex?\left&space;\lfloor&space;n/2&space;\right&space;\rfloor)
 qubits.
 

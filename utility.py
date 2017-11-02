@@ -40,7 +40,7 @@ class Utility(object):
                         self.__plain_map[i] = self.__plain_map[i] + [j]
                 self.__plain_map[i] = self.__plain_map[i] + controlled
             logger.log(logging.DEBUG, 'init() - plain map:\n%s', str(self.__plain_map))
-            self.ranking(self.__coupling_map, self.__ranks)
+            self.start_explore(self.__coupling_map, self.__ranks)
             self.__most_connected = self.find_max(self.__ranks)
             self.create_path(self.__most_connected[0],  # inverse_map=self.__inverse_coupling_map,
                              plain_map=self.__plain_map)
@@ -66,7 +66,7 @@ class Utility(object):
 
     # TODO Try using some sort of centrality algorithm
 
-    def ranking(self, graph, ranks):
+    def start_explore(self, graph, ranks):
         visited = dict()
         for source in graph:
             visited.update({source: []})

@@ -260,6 +260,7 @@ def launch_exp(execution, queries, workbook_name, device, utility, n_qubits, ora
 
     wb.close()
 
+
 # device is the device you want to run the experiment on
 # executions is the number of different experiment you want to run
 # queries is the maximum number of queries, starting from 10 and increasing by 10
@@ -295,14 +296,17 @@ for execution in range(1, executions + 1, 1):
 
         # Comment the experiments you don't want to run
         for n_queries in range(10, (queries + 10), 10):
-            launch_exp(execution, queries, workbook_name, qx5, utility, n_qubits=3, oracle=oracle, num_shots=n_queries)
-            # launch_exp(execution, queries, workbook_name, qx5, utility, n_qubits=5, oracle=oracle, num_shots=n_queries)
-            # launch_exp(execution, queries, workbook_name, qx5, utility, n_qubits=7, oracle=oracle, num_shots=n_queries)
-            launch_exp(execution, queries, workbook_name, qx5, utility, n_qubits=9, oracle=oracle, num_shots=n_queries)
-            # launch_exp(execution, queries, workbook_name, qx5, utility, n_qubits=12, oracle=oracle, num_shots=n_queries)
-            # launch_exp(execution, queries, workbook_name, qx5, utility, n_qubits=14, oracle=oracle, num_shots=n_queries)
-            launch_exp(execution, queries, workbook_name, qx5, utility, n_qubits=16, oracle=oracle, num_shots=n_queries)
+            launch_exp(execution, queries, workbook_name, device, utility, n_qubits=3, oracle=oracle,
+                       num_shots=n_queries)
+            # launch_exp(execution, queries, workbook_name, device, utility, n_qubits=5, oracle=oracle, num_shots=n_queries)
+            # launch_exp(execution, queries, workbook_name, device, utility, n_qubits=7, oracle=oracle, num_shots=n_queries)
+            launch_exp(execution, queries, workbook_name, device, utility, n_qubits=9, oracle=oracle,
+                       num_shots=n_queries)
+            # launch_exp(execution, queries, workbook_name, device, utility, n_qubits=12, oracle=oracle, num_shots=n_queries)
+            # launch_exp(execution, queries, workbook_name, device, utility, n_qubits=14, oracle=oracle, num_shots=n_queries)
+            launch_exp(execution, queries, workbook_name, device, utility, n_qubits=16, oracle=oracle,
+                       num_shots=n_queries)
 
-    utility.close()
+utility.close()
 
 logger.info('All done.')

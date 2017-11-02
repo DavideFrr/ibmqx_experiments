@@ -35,7 +35,7 @@ wheels/
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Unit ranking / coverage reports
+# Unit start_explore / coverage reports
 htmlcov/
 .tox/
 .coverage
@@ -159,3 +159,4 @@ new_error_test/
 re-mapper_ibmqx4_8192_5_qubits_ghz.txt
 re-mapper_ibmqx5_8192_5_qubits_envariance.txt
 re-mapper_ibmqx5_n_qubits_envariance.txt
+hists.py
