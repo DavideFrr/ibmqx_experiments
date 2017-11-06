@@ -144,8 +144,7 @@ def launch_exp(workbook_name, device, utility, n_qubits, num_shots=1024):
 
     logger.info('launch_exp() - QASM:\n%s', str(QASM_source))
 
-    result = Q_program.execute(["envariance"], backend=device, wait=2, timeout=1000, shots=num_shots, max_credits=10,
-                               silent=False)
+    result = Q_program.execute(["envariance"], backend=device, wait=2, timeout=1000, shots=num_shots, max_credits=5)
 
     counts = result.get_counts("envariance")
 
@@ -252,12 +251,10 @@ workbook5.close()
 
 utility = Utility(coupling_map_qx4)
 for n_shots in shots:
+    # Comment the experiments you don't want to run
     launch_exp(workbook5_name, qx4, utility, n_qubits=2, num_shots=n_shots)
-    time.sleep(2)
     launch_exp(workbook5_name, qx4, utility, n_qubits=3, num_shots=n_shots)
-    time.sleep(2)
     launch_exp(workbook5_name, qx4, utility, n_qubits=5, num_shots=n_shots)
-    time.sleep(2)
 
 utility.close()
 
@@ -269,22 +266,15 @@ workbook16.close()
 
 utility = Utility(coupling_map_qx5)
 for n_shots in shots:
+    # Comment the experiments you don't want to run
     launch_exp(workbook16_name, qx5, utility, n_qubits=2, num_shots=n_shots)
-    time.sleep(2)
     launch_exp(workbook16_name, qx5, utility, n_qubits=3, num_shots=n_shots)
-    time.sleep(2)
     launch_exp(workbook16_name, qx5, utility, n_qubits=5, num_shots=n_shots)
-    time.sleep(2)
     launch_exp(workbook16_name, qx5, utility, n_qubits=7, num_shots=n_shots)
-    time.sleep(2)
     launch_exp(workbook16_name, qx5, utility, n_qubits=9, num_shots=n_shots)
-    time.sleep(2)
     launch_exp(workbook16_name, qx5, utility, n_qubits=12, num_shots=n_shots)
-    time.sleep(2)
     launch_exp(workbook16_name, qx5, utility, n_qubits=14, num_shots=n_shots)
-    time.sleep(2)
     launch_exp(workbook16_name, qx5, utility, n_qubits=16, num_shots=n_shots)
-    time.sleep(2)
 
 utility.close()
 
