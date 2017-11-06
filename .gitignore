@@ -150,12 +150,9 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 .idea/
-Data_Parity/
+GHZ.py
 re-mapper_test.py
-Data_Envariance/
-Data_Parity/500/
 new_error.py
-new_error_test/
 re-mapper_ibmqx4_8192_5_qubits_ghz.txt
 re-mapper_ibmqx5_8192_5_qubits_envariance.txt
 re-mapper_ibmqx5_n_qubits_envariance.txt
