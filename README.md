@@ -32,26 +32,28 @@ The objective is to assign every node _x_ a rank, defined as the number of nodes
 that can reach _x_ along the directed edges of the coupling map.
 The node with the highest rank is then selected as the starting point for building the circuit.
 
-All of the above is done by the [explore()](https://github.com/DavideFrr/ibmqx_experiments/blob/491fa055c50d60c30d79995a3aabdac52e4c8e17/utility.py#L58),
+All of the above is done by the [explore()](https://github.com/DavideFrr/ibmqx_experiments/blob/6349f5a688f927afc0a662f01f060f02b260771c/utility.py#L58),
 whose objective is to assign a rank (the counter incremented when a node is reached) to
 every node based on how many nodes can reach it. The node with the higher rank will be
 selected as the start point for building our circuit.
 
-As soon as the most connected qubit has been found, the [create_path()](https://github.com/DavideFrr/ibmqx_experiments/blob/491fa055c50d60c30d79995a3aabdac52e4c8e17/utility.py#L100)
+As soon as the most connected qubit has been found, the [create_path()](https://github.com/DavideFrr/ibmqx_experiments/blob/6349f5a688f927afc0a662f01f060f02b260771c/utility.py#L100)
 function is executed, in order to obtain a path connecting all the qubits
 that must be involved in the GHZ circuit.
 
-The [place_cnot()](https://github.com/DavideFrr/ibmqx_experiments/blob/491fa055c50d60c30d79995a3aabdac52e4c8e17/utility.py#L149)
-function walks the aforementioned path and uses the [cnot()](https://github.com/DavideFrr/ibmqx_experiments/blob/491fa055c50d60c30d79995a3aabdac52e4c8e17/utility.py#L133)
+The [place_cx()](https://github.com/DavideFrr/ibmqx_experiments/blob/6349f5a688f927afc0a662f01f060f02b260771c/utility.py#L149)
+function walks the aforementioned path and uses the [cx()](https://github.com/DavideFrr/ibmqx_experiments/blob/6349f5a688f927afc0a662f01f060f02b260771c/utility.py#L133)
 function to put across each node pair either a CNOT or an inverse-CNOT gate,
 depending on the direction of the link dictated by the coupling map.
-Parameter _k_ in [place_cnot()](https://github.com/DavideFrr/ibmqx_experiments/blob/491fa055c50d60c30d79995a3aabdac52e4c8e17/utility.py#L149)
+Parameter _k_ in [place_cnot()](https://github.com/DavideFrr/ibmqx_experiments/blob/6349f5a688f927afc0a662f01f060f02b260771c/utility.py#L149)
 allows to reuse the function to build other circuits
 than GHZ. More specifically, _k=11_ corresponds to the GHZ circuit.
 
-Before launching an experiment on a specific device, you'll have to create a new [Utility()] object,
-the constructor takes the device coupling-map as a parameter; when you're done experimenting with that device you'll
-then need to [close()] the Utility object.
+Before launching an experiment on a specific device, you'll have to create a new [Utility()](https://github.com/DavideFrr/ibmqx_experiments/blob/6349f5a688f927afc0a662f01f060f02b260771c/utility.py#L28)
+object, the constructor takes the device coupling-map as a parameter;
+when you're done experimenting with that device you'll
+then need to [close()](https://github.com/DavideFrr/ibmqx_experiments/blob/6349f5a688f927afc0a662f01f060f02b260771c/utility.py#L51)
+the Utility object.
 
 _ibmqx5 coupling-map graphic rapresentation_:
 # ![qx5_coupling-map](images/qx5_coupling-map.png)
@@ -85,7 +87,8 @@ _Red arrows means the use of inverse cnot_
 
 ## Envariance
 
-[envariance.py] is were you'll find all you need to tun envariance experiments; the [launch_exp()]
+[envariance.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/envariance.py)
+is were you'll find all you need to tun envariance experiments; the [launch_exp()](https://github.com/DavideFrr/ibmqx_experiments/blob/6349f5a688f927afc0a662f01f060f02b260771c/envariance.py#L104)
 function will run the circuit for the given number of qubit, shots and coupling-map on the given
 device.
 
@@ -105,15 +108,32 @@ _Envariance circuits with 5 qubits and 16 qubits, for QX4 and QX5 respectively_
 
 ## Parity
 
-[parity.py] will run parity learning experiments; the [launch_exp()]
+[parity.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/parity.py)
+will run parity learning experiments; the [launch_exp()](https://github.com/DavideFrr/ibmqx_experiments/blob/6349f5a688f927afc0a662f01f060f02b260771c/parity.py#L98)
 function will run the circuit for the given number of qubit, queries, coupling-map and _k_;
 _k_ can either be '11', '10' or '00' and represent the type of string that will be learned
 by the oracle.
 
-All results of the executions will be stored in txt and xlsx files for later use.
+All results of the executions will be stored in txt files for later use.
 More info in the code.
 
 # ![qx5_16-qubits_par-00_circ](images/qx5_16-qubits_par-00_circ.png)
 # ![qx5_16-qubits_par-10_circ](images/qx5_16-qubits_par-10_circ.png)
 # ![qx5_16-qubits_par-11_circ](images/qx5_16-qubits_par-11_circ.png)
 _Parity circuits with 15 qubits on QX5, for k='00', k='10' and k='11' respectively_
+
+# Bit-Wise Error
+
+For the parity learning experiment, provided the noise isn’t too large,
+each bit of the output is still correct more than half the time. What we do is:
+- select only the results where the result qubit is 1
+- keep track of the results for each bit separately
+- use whichever result (0 or 1) is most common for each bit
+(in case they are equal, select randomly)
+
+Every time the resulting string is correct we have a success, dividing
+the number of successes by the number of executions we obtain the success probability
+and also the error probability.
+
+All of ti can be done by running [bit_wise_error.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/bit_wise_error.py),
+which will store the results in a txt file.
