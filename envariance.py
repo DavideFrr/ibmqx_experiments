@@ -101,9 +101,9 @@ local_sim = 'local_qasm_simulator'
 
 
 # launch envariance experiment on the given device
-def launch_exp(workbook_name, device, utility, n_qubits, num_shots=1024):
+def launch_exp(execution, workbook_name, device, utility, n_qubits, num_shots=1024):
     size = 0
-    home = expanduser("~")
+    results = dict()
 
     if device == qx2 or device == qx4:
         if n_qubits <= 5:
@@ -138,7 +138,7 @@ def launch_exp(workbook_name, device, utility, n_qubits, num_shots=1024):
 
     circuit = Q_program.create_circuit("envariance", [quantum_r], [classical_r])
 
-    utility.envariance(circuit=circuit, quantum_r=quantum_r, classical_r=classical_r, n_qubits=n_qubits)
+    connected = utility.envariance(circuit=circuit, quantum_r=quantum_r, classical_r=classical_r, n_qubits=n_qubits)
 
     QASM_source = Q_program.get_qasm("envariance")
 
@@ -152,51 +152,62 @@ def launch_exp(workbook_name, device, utility, n_qubits, num_shots=1024):
 
     sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 
-    filename = 'Data_Envariance/' + device + '/' + device + '_' + str(num_shots) + '_' + str(
+    filename = 'Data_Envariance/' + device + '/' + 'execution' + str(
+        execution) + '/' + device + '_' + str(num_shots) + '_' + str(
         n_qubits) + '_qubits_envariance.txt'
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     out_f = open(filename, 'w')
 
     # store counts in txt file and xlsx file
     out_f.write('VALUES\t\tCOUNTS\n\n')
+
+    stop = n_qubits // 2
     for i in sorted_c:
-        out_f.write(i[0] + '\t' + str(i[1]) + '\n')
+        reverse = i[0][::-1]
+        sorted_v = []
+        for n in range(n_qubits-stop):
+            sorted_v.append(reverse[connected[n + stop]])
+        for n in range(stop):
+            sorted_v.append(reverse[connected[n]])
+        value = ''.join(str(v) for v in sorted_v)
+        results.update({value: i[1]})
+        out_f.write(value + '\t' + str(i[1]) + '\n')
 
     out_f.close()
 
-    wbRD = xlrd.open_workbook(workbook_name.format(home))
-    sheets = wbRD.sheets()
-
-    wb = xlsxwriter.Workbook(workbook_name.format(home))
-
-    for sheet in sheets:  # write data from old file
-        newSheet = wb.add_worksheet(sheet.name)
-        for row in range(sheet.nrows):
-            for col in range(sheet.ncols):
-                newSheet.write(row, col, sheet.cell(row, col).value)
-
-    sheet = str(num_shots) + '_' + str(n_qubits)
-    worksheet = wb.add_worksheet(sheet)
-    bold = wb.add_format({'bold': True})
-    binary = wb.add_format()
-    binary.set_num_format_index('00000')
-
-    worksheet.write(0, 0, 'Values', bold)
-    worksheet.write(0, 1, 'Counts', bold)
-    worksheet.write(0, 2, 'Probability', bold)
-    worksheet.write(0, 3, 'Fidelity', bold)
-    row = 1
-    col = 0
-    fidelity = 0
-    for i in sorted_c:
-        worksheet.write(row, col, i[0], binary)
-        worksheet.write(row, col + 1, i[1])
-        worksheet.write(row, col + 2, i[1] / num_shots)
-        if row == 1 or row == 2:
-            fidelity += math.sqrt(i[1] / (2 * num_shots))
-        row += 1
-    worksheet.write(row, col + 1, '=SUM(B2:B' + str(row) + ')')
-    worksheet.write(1, 3, fidelity)
+    # wbRD = xlrd.open_workbook(workbook_name.format(home))
+    # sheets = wbRD.sheets()
+    #
+    # wb = xlsxwriter.Workbook(workbook_name.format(home))
+    #
+    # for sheet in sheets:  # write data from old file
+    #     newSheet = wb.add_worksheet(sheet.name)
+    #     for row in range(sheet.nrows):
+    #         for col in range(sheet.ncols):
+    #             newSheet.write(row, col, sheet.cell(row, col).value)
+    #
+    # sheet = str(num_shots) + '_' + str(n_qubits)
+    # worksheet = wb.add_worksheet(sheet)
+    # bold = wb.add_format({'bold': True})
+    # binary = wb.add_format()
+    # binary.set_num_format_index('00000')
+    #
+    # worksheet.write(0, 0, 'Values', bold)
+    # worksheet.write(0, 1, 'Counts', bold)
+    # worksheet.write(0, 2, 'Probability', bold)
+    # worksheet.write(0, 3, 'Fidelity', bold)
+    # row = 1
+    # col = 0
+    # fidelity = 0
+    # for i in sorted_c:
+    #     worksheet.write(row, col, i[0], binary)
+    #     worksheet.write(row, col + 1, i[1])
+    #     worksheet.write(row, col + 2, i[1] / num_shots)
+    #     if row == 1 or row == 2:
+    #         fidelity += math.sqrt(i[1] / (2 * num_shots))
+    #     row += 1
+    # worksheet.write(row, col + 1, '=SUM(B2:B' + str(row) + ')')
+    # worksheet.write(1, 3, fidelity)
 
     # Uncomment the below section if you want to add charts to the file
 
@@ -228,12 +239,14 @@ def launch_exp(workbook_name, device, utility, n_qubits, num_shots=1024):
     #
     # worksheet.insert_chart('F3', chart)
 
-    wb.close()
+    # wb.close()
 
+
+executions = 10
 
 shots = [
-    1024,
-    2048,
+    # 1024,
+    # 2048,
     8192
 ]
 
@@ -244,38 +257,40 @@ directory = 'Data_Envariance/'
 os.makedirs(os.path.dirname(directory), exist_ok=True)
 
 workbook5_name = directory + 'ibmqx4_n_qubits_envariance.xlsx'
-
-# Comment this two lines if you've already created the file in a previous execution
-workbook5 = xlsxwriter.Workbook(workbook5_name)
-workbook5.close()
-
+#
+# # Comment this two lines if you've already created the file in a previous execution
+# # workbook5 = xlsxwriter.Workbook(workbook5_name)
+# # workbook5.close()
+#
 utility = Utility(coupling_map_qx4)
-for n_shots in shots:
-    # Comment the experiments you don't want to run
-    launch_exp(workbook5_name, qx4, utility, n_qubits=2, num_shots=n_shots)
-    launch_exp(workbook5_name, qx4, utility, n_qubits=3, num_shots=n_shots)
-    launch_exp(workbook5_name, qx4, utility, n_qubits=5, num_shots=n_shots)
-
+for execution in range(1, executions+1, 1):
+    for n_shots in shots:
+        # Comment the experiments you don't want to run
+        launch_exp(execution, workbook5_name, qx4, utility, n_qubits=2, num_shots=n_shots)
+        launch_exp(execution, workbook5_name, qx4, utility, n_qubits=3, num_shots=n_shots)
+        launch_exp(execution, workbook5_name, qx4, utility, n_qubits=5, num_shots=n_shots)
+#
 utility.close()
 
 workbook16_name = directory + 'ibmqx5_n_qubits_envariance.xlsx'
-
-# Comment this two lines if you've already created the file in a previous execution
-workbook16 = xlsxwriter.Workbook(directory + 'ibmqx5_n_qubits_envariance.xlsx')
-workbook16.close()
-
+#
+# # Comment this two lines if you've already created the file in a previous execution
+# # workbook16 = xlsxwriter.Workbook(directory + 'ibmqx5_n_qubits_envariance.xlsx')
+# # workbook16.close()
+#
 utility = Utility(coupling_map_qx5)
-for n_shots in shots:
-    # Comment the experiments you don't want to run
-    launch_exp(workbook16_name, qx5, utility, n_qubits=2, num_shots=n_shots)
-    launch_exp(workbook16_name, qx5, utility, n_qubits=3, num_shots=n_shots)
-    launch_exp(workbook16_name, qx5, utility, n_qubits=5, num_shots=n_shots)
-    launch_exp(workbook16_name, qx5, utility, n_qubits=7, num_shots=n_shots)
-    launch_exp(workbook16_name, qx5, utility, n_qubits=9, num_shots=n_shots)
-    launch_exp(workbook16_name, qx5, utility, n_qubits=12, num_shots=n_shots)
-    launch_exp(workbook16_name, qx5, utility, n_qubits=14, num_shots=n_shots)
-    launch_exp(workbook16_name, qx5, utility, n_qubits=16, num_shots=n_shots)
-
+for execution in range(1, executions+1, 1):
+    for n_shots in shots:
+        # Comment the experiments you don't want to run
+        launch_exp(execution, workbook16_name, qx5, utility, n_qubits=2, num_shots=n_shots)
+        launch_exp(execution, workbook16_name, qx5, utility, n_qubits=3, num_shots=n_shots)
+        launch_exp(execution, workbook16_name, qx5, utility, n_qubits=5, num_shots=n_shots)
+        launch_exp(execution, workbook16_name, qx5, utility, n_qubits=7, num_shots=n_shots)
+        launch_exp(execution, workbook16_name, qx5, utility, n_qubits=9, num_shots=n_shots)
+        launch_exp(execution, workbook16_name, qx5, utility, n_qubits=12, num_shots=n_shots)
+        launch_exp(execution, workbook16_name, qx5, utility, n_qubits=14, num_shots=n_shots)
+        launch_exp(execution, workbook16_name, qx5, utility, n_qubits=16, num_shots=n_shots)
+#
 utility.close()
 
 logger.info('All done.')

@@ -157,3 +157,5 @@ re-mapper_ibmqx4_8192_5_qubits_ghz.txt
 re-mapper_ibmqx5_8192_5_qubits_envariance.txt
 re-mapper_ibmqx5_n_qubits_envariance.txt
 hists.py
+Data_Envariance/ibmqx5/execution1/old/
+Data_Envariance/ibmqx4/old/

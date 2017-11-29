@@ -230,16 +230,21 @@ class Utility(object):
         self.measure(circuit, quantum_r, classical_r)
 
     def envariance(self, circuit, quantum_r, classical_r, n_qubits):
+        connected = []
         self.create(circuit, quantum_r, classical_r, n_qubits)
+        sorted_c = sorted(self.__connected.items(), key=operator.itemgetter(0))
+        for i in sorted_c:
+            connected.append(i[0])
         self.__n_qubits = 0
         self.__connected.clear()
+        return connected
 
-    def parity(self, circuit, quantum_r, classical_r, n_qubits, oracle='11', connected=None):
-        if connected is None:
-            connected = []
+    def parity(self, circuit, quantum_r, classical_r, n_qubits, oracle='11'):
+        connected = []
         self.create(circuit, quantum_r, classical_r, n_qubits, x=False, oracle=oracle)
         for i in self.__connected:
             connected.append(i)
         logger.debug('parity() - connected:\n%s', str(connected))
         self.__n_qubits = 0
         self.__connected.clear()
+        return connected

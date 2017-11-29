@@ -11,14 +11,14 @@ import myLogger
 import os
 import random
 
-logger = logging.getLogger('new_error')
+logger = logging.getLogger('bit_wise_error')
 logger.addHandler(myLogger.MyHandler())
 logger.setLevel(logging.INFO)
 logger.propagate = False
 
 # device is the device the experiment was run on
 # executions is the number of different experiment you ran
-# queries is the maximum number of queries
+# n_shots is the maximum number of n_shots
 # n_qubits the number of qubits of the experiments
 # oracles are the strings you want to learn: '10' for '10...10', '11' for '11...11', '00' for '00...00'
 
@@ -32,13 +32,21 @@ oracles = [
 
 n_qubits = 16
 
-queries = 50
+queries = []
 
-executions = 50
+executions = 100
 
 directory = 'Data_Parity/' + device + '/'
 
 logger.info('Started')
+
+for n_queries in range(5, 55, 5):
+    queries.append(n_queries)
+    if n_queries == 50:
+        queries.append(75)
+        queries.append(100)
+        queries.append(200)
+        queries.append(500)
 
 for oracle in oracles:
     a = ''
@@ -52,11 +60,11 @@ for oracle in oracles:
                 a += '1'
             else:
                 a += '0'
-    writef = filename = directory + oracle + '/' + device + '_' + oracle + '_' + str(n_qubits) + '_qubits_parity_bit-wise_error_v2.txt'
+    writef = filename = directory + oracle + '/' + device + '_' + oracle + '_' + str(n_qubits) + '_qubits_parity_bit-wise_error.txt'
     os.makedirs(os.path.dirname(writef), exist_ok=True)
     write_f = open(writef, 'a')
     write_f.write('N\t\tError\n\n')
-    for n_queries in range(5, queries+5, 5):
+    for n_queries in queries:
         correct = 0
         success_rate = 0
         for execution in range(1, executions+1, 1):

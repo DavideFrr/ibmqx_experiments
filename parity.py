@@ -95,10 +95,8 @@ local_sim = 'local_qasm_simulator'
 
 
 # launch envariance experiment on the given device
-def launch_exp(execution, queries, device, utility, n_qubits, oracle='11', num_shots=1024):
+def launch_exp(execution, device, utility, n_qubits, oracle='11', num_shots=1024):
     size = 0
-
-    ordered_q = []
 
     results = dict()
 
@@ -135,8 +133,7 @@ def launch_exp(execution, queries, device, utility, n_qubits, oracle='11', num_s
 
     circuit = Q_program.create_circuit('parity', [quantum_r], [classical_r])
 
-    utility.parity(circuit=circuit, quantum_r=quantum_r, classical_r=classical_r, n_qubits=n_qubits, oracle=oracle,
-                   connected=ordered_q)
+    connected = utility.parity(circuit=circuit, quantum_r=quantum_r, classical_r=classical_r, n_qubits=n_qubits, oracle=oracle)
 
     QASM_source = Q_program.get_qasm('parity')
 
@@ -159,22 +156,22 @@ def launch_exp(execution, queries, device, utility, n_qubits, oracle='11', num_s
 
     # store counts in txt file and xlsx file
     out_f.write('VALUES\t\tCOUNTS\n\n')
-    logger.debug('launch_exp() - oredred_q:\n%s', str(ordered_q))
+    logger.debug('launch_exp() - oredred_q:\n%s', str(connected))
     stop = n_qubits // 2
     for i in sorted_c:
         reverse = i[0][::-1]
         logger.log(logging.VERBOSE, 'launch_exp() - reverse in for 1st loop: %s', str(reverse))
-        sorted_v = [reverse[ordered_q[0]]]
-        logger.log(logging.VERBOSE, 'launch_exp() - oredred_q[0] in 1st for loop: %s', str(ordered_q[0]))
+        sorted_v = [reverse[connected[0]]]
+        logger.log(logging.VERBOSE, 'launch_exp() - connected[0] in 1st for loop: %s', str(connected[0]))
         logger.log(logging.VERBOSE, 'launch_exp() - sorted_v in 1st for loop: %s', str(sorted_v))
         for n in range(stop):
-            sorted_v.append(reverse[ordered_q[n + 1]])
-            logger.log(logging.VERBOSE, 'launch_exp() - ordered_q[n+1], sorted_v[n+1] in 2nd for loop: %s,%s',
-                       str(ordered_q[n + 1]), str(sorted_v[n + 1]))
+            sorted_v.append(reverse[connected[n + 1]])
+            logger.log(logging.VERBOSE, 'launch_exp() - connected[n+1], sorted_v[n+1] in 2nd for loop: %s,%s',
+                       str(connected[n + 1]), str(sorted_v[n + 1]))
             if (n + stop + 1) != n_qubits:
-                sorted_v.append(reverse[ordered_q[n + stop + 1]])
-                logger.log(logging.VERBOSE, 'launch_exp() - ordered_q[n+stop+1], sorted_v[n+2] in 2nd for loop: %s%s',
-                           str(ordered_q[n + stop + 1]), str(sorted_v[n + 2]))
+                sorted_v.append(reverse[connected[n + stop + 1]])
+                logger.log(logging.VERBOSE, 'launch_exp() - connected[n+stop+1], sorted_v[n+2] in 2nd for loop: %s%s',
+                           str(connected[n + stop + 1]), str(sorted_v[n + 2]))
         value = ''.join(str(v) for v in sorted_v)
         results.update({value: i[1]})
         out_f.write(value + '\t' + str(i[1]) + '\n')
@@ -184,18 +181,18 @@ def launch_exp(execution, queries, device, utility, n_qubits, oracle='11', num_s
 
 # device is the device you want to run the experiment on
 # executions is the number of different experiment you want to run
-# queries is the maximum number of queries
+# n_shots is the maximum number of n_shots
 # oracles are the strings you want to learn: '10' for '10...10', '11' for '11...11', '00' for '00...00'
 device = qx5
 
-executions = 50
+executions = 100
 
 queries = 50
 
 oracles = [
-    '00',
-    '10',
-    '11',
+    # '00',
+    # '10',
+    # '11',
 ]
 
 # launch_exp takes the argument device which can either be qx2, qx3, online_sim or local_sim
@@ -205,19 +202,20 @@ utility = Utility(coupling_map_qx5)
 directory = 'Data_Parity/'
 os.makedirs(os.path.dirname(directory), exist_ok=True)
 
-for execution in range(1, executions+1, 1):
+for execution in range(51, executions+1, 1):
 
     for oracle in oracles:
 
         # Comment the experiments you don't want to run
-        for n_queries in range(5, queries+5, 5):
-            launch_exp(execution, queries, device, utility, n_qubits=3, oracle=oracle, num_shots=n_queries)
-            launch_exp(execution, queries, device, utility, n_qubits=5, oracle=oracle, num_shots=n_queries)
-            launch_exp(execution, queries, device, utility, n_qubits=7, oracle=oracle, num_shots=n_queries)
-            launch_exp(execution, queries, device, utility, n_qubits=9, oracle=oracle, num_shots=n_queries)
-            launch_exp(execution, queries, device, utility, n_qubits=12, oracle=oracle, num_shots=n_queries)
-            launch_exp(execution, queries, device, utility, n_qubits=14, oracle=oracle, num_shots=n_queries)
-            launch_exp(execution, queries, device, utility, n_qubits=16, oracle=oracle, num_shots=n_queries)
+        for n_queries in range(75, 75+100, 100):
+            # launch_exp(execution, device, utility, n_qubits=3, oracle=oracle, num_shots=n_queries)
+            # launch_exp(execution, device, utility, n_qubits=5, oracle=oracle, num_shots=n_queries)
+            # launch_exp(execution, device, utility, n_qubits=7, oracle=oracle, num_shots=n_queries)
+            # launch_exp(execution, device, utility, n_qubits=9, oracle=oracle, num_shots=n_queries)
+            # launch_exp(execution, device, utility, n_qubits=12, oracle=oracle, num_shots=n_queries)
+            # launch_exp(execution, device, utility, n_qubits=14, oracle=oracle, num_shots=n_queries)
+            logger.info('Qubits %d - Oracle %s - Execution %d - Queries %d', 16, oracle, execution, n_queries)
+            launch_exp(execution, device, utility, n_qubits=16, oracle=oracle, num_shots=n_queries)
 
 utility.close()
 
