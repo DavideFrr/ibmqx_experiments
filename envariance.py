@@ -6,23 +6,18 @@ August 2017
 """
 
 import logging
-
-from os.path import expanduser
+from time import sleep
 
 import myLogger
 import os
 import operator
-import xlsxwriter
-import xlrd
-import time
-import math
 
 from utility import Utility
 
 import sys
 
 sys.path.append(  # solve the relative dependencies if you clone QISKit from the Git repo and use like a global.
-    "D:/PyCharm/qiskit-sdk-py")
+    "../qiskit-sdk-py")
 
 from qiskit import QuantumProgram
 import Qconfig
@@ -101,8 +96,9 @@ local_sim = 'local_qasm_simulator'
 
 
 # launch envariance experiment on the given device
-def launch_exp(execution, workbook_name, device, utility, n_qubits, num_shots=1024):
+def launch_exp(execution, device, utility, n_qubits, num_shots=1024):
     size = 0
+
     results = dict()
 
     if device == qx2 or device == qx4:
@@ -122,7 +118,7 @@ def launch_exp(execution, workbook_name, device, utility, n_qubits, num_shots=10
     elif device == online_sim:
         if n_qubits <= 5:
             size = 5
-        if n_qubits <= 16:
+        elif n_qubits <= 16:
             size = 16
     else:
         logger.critical('launch_exp() - Unknown device.')
@@ -130,7 +126,13 @@ def launch_exp(execution, workbook_name, device, utility, n_qubits, num_shots=10
 
     Q_program = QuantumProgram()
 
-    Q_program.set_api(Qconfig.APItoken, Qconfig.config["url"])  # set the APIToken and API url
+    try:
+        Q_program.set_api(Qconfig.APItoken, Qconfig.config["url"])  # set the APIToken and API url
+    except ConnectionError:
+        sleep(900)
+        logger.critical('API Exception occurred, retrying\nQubits %d - Execution %d - Shots %d', n_qubits, execution, num_shots)
+        launch_exp(execution, device, utility, n_qubits=n_qubits, num_shots=num_shots)
+        return
 
     quantum_r = Q_program.create_quantum_register("qr", size)
 
@@ -142,11 +144,48 @@ def launch_exp(execution, workbook_name, device, utility, n_qubits, num_shots=10
 
     QASM_source = Q_program.get_qasm("envariance")
 
-    logger.info('launch_exp() - QASM:\n%s', str(QASM_source))
+    logger.debug('launch_exp() - QASM:\n%s', str(QASM_source))
 
-    result = Q_program.execute(["envariance"], backend=device, wait=2, timeout=1000, shots=num_shots, max_credits=5)
+    while True:
+        try:
+            backend_status = Q_program.get_backend_status(device)
+            if ('available' in backend_status and backend_status['available'] is False) \
+                    or ('busy' in backend_status and backend_status['busy'] is True):
+                logger.critical('%s currently offline, waiting...', device)
+                while Q_program.get_backend_status(device)['available'] is False:
+                    sleep(1800)
+                logger.critical('%s is back online, resuming execution', device)
+        except ConnectionError:
+            logger.critical('Error getting backend status, retrying...')
+            sleep(900)
+            continue
+        except ValueError:
+            logger.critical('Backend is not available, waiting...')
+            sleep(900)
+            continue
+        break
 
-    counts = result.get_counts("envariance")
+    if Q_program.get_api().get_my_credits()['remaining'] < 3:
+        logger.critical('Qubits %d - Execution %d - Shots %d ---- Waiting for credits to replenish...',
+                    n_qubits, execution, num_shots)
+        while Q_program.get_api().get_my_credits()['remaining'] < 3:
+            sleep(900)
+        logger.critical('Credits replenished, resuming execution')
+
+    try:
+        result = Q_program.execute(["envariance"], backend=device, wait=2, timeout=1000, shots=num_shots, max_credits=5)
+    except Exception:
+        sleep(900)
+        logger.critical('Exception occurred, retrying\nQubits %d - Execution %d - Shots %d', n_qubits, execution, num_shots)
+        launch_exp(execution, device, utility, n_qubits=n_qubits, num_shots=num_shots)
+        return
+
+    try:
+        counts = result.get_counts("envariance")
+    except Exception:
+        logger.critical('Exception occurred, retrying\nQubits %d - Execution %d - Shots %d', n_qubits, execution, num_shots)
+        launch_exp(execution, device, utility, n_qubits=n_qubits, num_shots=num_shots)
+        return
 
     logger.debug('launch_exp() - counts:\n%s', str(counts))
 
@@ -175,122 +214,56 @@ def launch_exp(execution, workbook_name, device, utility, n_qubits, num_shots=10
 
     out_f.close()
 
-    # wbRD = xlrd.open_workbook(workbook_name.format(home))
-    # sheets = wbRD.sheets()
-    #
-    # wb = xlsxwriter.Workbook(workbook_name.format(home))
-    #
-    # for sheet in sheets:  # write data from old file
-    #     newSheet = wb.add_worksheet(sheet.name)
-    #     for row in range(sheet.nrows):
-    #         for col in range(sheet.ncols):
-    #             newSheet.write(row, col, sheet.cell(row, col).value)
-    #
-    # sheet = str(num_shots) + '_' + str(n_qubits)
-    # worksheet = wb.add_worksheet(sheet)
-    # bold = wb.add_format({'bold': True})
-    # binary = wb.add_format()
-    # binary.set_num_format_index('00000')
-    #
-    # worksheet.write(0, 0, 'Values', bold)
-    # worksheet.write(0, 1, 'Counts', bold)
-    # worksheet.write(0, 2, 'Probability', bold)
-    # worksheet.write(0, 3, 'Fidelity', bold)
-    # row = 1
-    # col = 0
-    # fidelity = 0
-    # for i in sorted_c:
-    #     worksheet.write(row, col, i[0], binary)
-    #     worksheet.write(row, col + 1, i[1])
-    #     worksheet.write(row, col + 2, i[1] / num_shots)
-    #     if row == 1 or row == 2:
-    #         fidelity += math.sqrt(i[1] / (2 * num_shots))
-    #     row += 1
-    # worksheet.write(row, col + 1, '=SUM(B2:B' + str(row) + ')')
-    # worksheet.write(1, 3, fidelity)
-
-    # Uncomment the below section if you want to add charts to the file
-
-    # chart = wb.add_chart({'type': 'column'})
-    # categories = '=' + sheet + '!$A$2:$A$' + str(num_rows + 1)
-    # values = '=' + sheet + '!$C$2:$C$' + str(num_rows + 1)
-    # chart.add_series({
-    #     'categories': categories,
-    #     'values': values,
-    #     'data_labels': {
-    #         'value': False,
-    #         'series_name': False,
-    #         'num_format': '0.#0',
-    #         'font': {'bold': True},
-    #     },
-    # })
-    #
-    # chart.set_legend({
-    #     'none': True
-    # })
-    #
-    # chart.set_title({
-    #     'name': sheet + '_qubits_envariance'
-    # })
-    #
-    # chart.set_x_axis({
-    #     'num_font': {'rotation': 50},
-    # })
-    #
-    # worksheet.insert_chart('F3', chart)
-
-    # wb.close()
-
 
 executions = 10
 
 shots = [
-    # 1024,
-    # 2048,
+    1024,
+    2048,
     8192
 ]
 
 # launch_exp takes the argument device which can either be qx2, qx3, qx4, qx5, online_sim or local_sim
 logger.info('Started')
 
+utility_qx4 = Utility(coupling_map_qx4)
 directory = 'Data_Envariance/'
 os.makedirs(os.path.dirname(directory), exist_ok=True)
 
-workbook5_name = directory + 'ibmqx4_n_qubits_envariance.xlsx'
-#
-# # Comment this two lines if you've already created the file in a previous execution
-# # workbook5 = xlsxwriter.Workbook(workbook5_name)
-# # workbook5.close()
-#
-utility = Utility(coupling_map_qx4)
 for execution in range(1, executions+1, 1):
     for n_shots in shots:
         # Comment the experiments you don't want to run
-        launch_exp(execution, workbook5_name, qx4, utility, n_qubits=2, num_shots=n_shots)
-        launch_exp(execution, workbook5_name, qx4, utility, n_qubits=3, num_shots=n_shots)
-        launch_exp(execution, workbook5_name, qx4, utility, n_qubits=5, num_shots=n_shots)
+        logger.info('Qubits %d - Execution %d - Shots %d', 2, execution, n_shots)
+        launch_exp(execution, online_sim, utility_qx4, n_qubits=2, num_shots=n_shots)
+        logger.info('Qubits %d - Execution %d - Shots %d', 3, execution, n_shots)
+        launch_exp(execution, qx4, utility_qx4, n_qubits=3, num_shots=n_shots)
+        logger.info('Qubits %d - Execution %d - Shots %d', 5, execution, n_shots)
+        launch_exp(execution, qx4, utility_qx4, n_qubits=5, num_shots=n_shots)
 #
-utility.close()
+utility_qx4.close()
 
-workbook16_name = directory + 'ibmqx5_n_qubits_envariance.xlsx'
-#
-# # Comment this two lines if you've already created the file in a previous execution
-# # workbook16 = xlsxwriter.Workbook(directory + 'ibmqx5_n_qubits_envariance.xlsx')
-# # workbook16.close()
-#
-utility = Utility(coupling_map_qx5)
+
+utility_qx5 = Utility(coupling_map_qx5)
 for execution in range(1, executions+1, 1):
     for n_shots in shots:
         # Comment the experiments you don't want to run
-        launch_exp(execution, workbook16_name, qx5, utility, n_qubits=2, num_shots=n_shots)
-        launch_exp(execution, workbook16_name, qx5, utility, n_qubits=3, num_shots=n_shots)
-        launch_exp(execution, workbook16_name, qx5, utility, n_qubits=5, num_shots=n_shots)
-        launch_exp(execution, workbook16_name, qx5, utility, n_qubits=7, num_shots=n_shots)
-        launch_exp(execution, workbook16_name, qx5, utility, n_qubits=9, num_shots=n_shots)
-        launch_exp(execution, workbook16_name, qx5, utility, n_qubits=12, num_shots=n_shots)
-        launch_exp(execution, workbook16_name, qx5, utility, n_qubits=14, num_shots=n_shots)
-        launch_exp(execution, workbook16_name, qx5, utility, n_qubits=16, num_shots=n_shots)
+        logger.info('Qubits %d - Execution %d - Shots %d', 2, execution, n_shots)
+        launch_exp(execution, qx5, utility_qx5, n_qubits=2, num_shots=n_shots)
+        logger.info('Qubits %d - Execution %d - Shots %d', 3, execution, n_shots)
+        launch_exp(execution, qx5, utility_qx5, n_qubits=3, num_shots=n_shots)
+        logger.info('Qubits %d - Execution %d - Shots %d', 5, execution, n_shots)
+        launch_exp(execution, qx5, utility_qx5, n_qubits=5, num_shots=n_shots)
+        logger.info('Qubits %d - Execution %d - Shots %d', 7, execution, n_shots)
+        launch_exp(execution, qx5, utility_qx5, n_qubits=7, num_shots=n_shots)
+        logger.info('Qubits %d - Execution %d - Shots %d', 9, execution, n_shots)
+        launch_exp(execution, qx5, utility_qx5, n_qubits=9, num_shots=n_shots)
+        logger.info('Qubits %d - Execution %d - Shots %d', 12, execution, n_shots)
+        launch_exp(execution, qx5, utility_qx5, n_qubits=12, num_shots=n_shots)
+        logger.info('Qubits %d - Execution %d - Shots %d', 14, execution, n_shots)
+        launch_exp(execution, qx5, utility_qx5, n_qubits=14, num_shots=n_shots)
+        logger.info('Qubits %d - Execution %d - Shots %d', 16, execution, n_shots)
+        launch_exp(execution, qx5, utility_qx5, n_qubits=16, num_shots=n_shots)
 #
-utility.close()
+utility_qx5.close()
 
 logger.info('All done.')
