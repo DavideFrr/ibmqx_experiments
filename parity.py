@@ -96,7 +96,9 @@ local_sim = 'local_qasm_simulator'
 
 
 # launch envariance experiment on the given device
-def launch_exp(execution, device, utility, n_qubits, oracle='11', num_shots=1024):
+def launch_exp(execution, device, utility, n_qubits, oracle='11', num_shots=1024, directory='Data_Parity/'):
+    os.makedirs(os.path.dirname(directory), exist_ok=True)
+
     size = 0
 
     results = dict()
@@ -133,7 +135,7 @@ def launch_exp(execution, device, utility, n_qubits, oracle='11', num_shots=1024
         logger.critical('API Exception occurred, retrying\nQubits %d - Oracle %s - Execution %d - Queries %d', n_qubits,
                     oracle,
                     execution, num_shots)
-        launch_exp(execution, device, utility, n_qubits=n_qubits, oracle=oracle, num_shots=num_shots)
+        launch_exp(execution, device, utility, n_qubits=n_qubits, oracle=oracle, num_shots=num_shots, directory=directory)
         return
 
     quantum_r = Q_program.create_quantum_register("qr", size)
@@ -182,7 +184,7 @@ def launch_exp(execution, device, utility, n_qubits, oracle='11', num_shots=1024
         sleep(900)
         logger.critical('Exception occurred, retrying\nQubits %d - Oracle %s - Execution %d - Queries %d', n_qubits, oracle,
                     execution, num_shots)
-        launch_exp(execution, device, utility, n_qubits=n_qubits, oracle=oracle, num_shots=num_shots)
+        launch_exp(execution, device, utility, n_qubits=n_qubits, oracle=oracle, num_shots=num_shots, directory=directory)
         return
 
     try:
@@ -190,14 +192,14 @@ def launch_exp(execution, device, utility, n_qubits, oracle='11', num_shots=1024
     except Exception:
         logger.critical('Exception occurred, retrying\nQubits %d - Oracle %s - Execution %d - Queries %d', n_qubits, oracle,
                     execution, num_shots)
-        launch_exp(execution, device, utility, n_qubits=n_qubits, oracle=oracle, num_shots=num_shots)
+        launch_exp(execution, device, utility, n_qubits=n_qubits, oracle=oracle, num_shots=num_shots, directory=directory)
         return
 
     logger.debug('launch_exp() - counts:\n%s', str(counts))
 
     sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 
-    filename = 'Data_Parity1/' + device + '/' + oracle + '/' + 'execution' + str(
+    filename = directory + device + '/' + oracle + '/' + 'execution' + str(
         execution) + '/' + device + '_' + str(
         num_shots) + 'queries_' + oracle + '_' + str(
         n_qubits) + '_qubits_parity.txt'
@@ -264,8 +266,6 @@ oracles = [
 logger.info('Started')
 
 utility_qx5 = Utility(coupling_map_qx5)
-directory = 'Data_Parity/'
-os.makedirs(os.path.dirname(directory), exist_ok=True)
 
 for execution in range(1, 1 + 1, 1):
 

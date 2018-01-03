@@ -96,7 +96,9 @@ local_sim = 'local_qasm_simulator'
 
 
 # launch envariance experiment on the given device
-def launch_exp(execution, device, utility, n_qubits, num_shots=1024):
+def launch_exp(execution, device, utility, n_qubits, num_shots=1024, directory='Data_Envariance/'):
+    os.makedirs(os.path.dirname(directory), exist_ok=True)
+
     size = 0
 
     results = dict()
@@ -131,7 +133,7 @@ def launch_exp(execution, device, utility, n_qubits, num_shots=1024):
     except ConnectionError:
         sleep(900)
         logger.critical('API Exception occurred, retrying\nQubits %d - Execution %d - Shots %d', n_qubits, execution, num_shots)
-        launch_exp(execution, device, utility, n_qubits=n_qubits, num_shots=num_shots)
+        launch_exp(execution, device, utility, n_qubits=n_qubits, num_shots=num_shots, directory=directory)
         return
 
     quantum_r = Q_program.create_quantum_register("qr", size)
@@ -177,21 +179,21 @@ def launch_exp(execution, device, utility, n_qubits, num_shots=1024):
     except Exception:
         sleep(900)
         logger.critical('Exception occurred, retrying\nQubits %d - Execution %d - Shots %d', n_qubits, execution, num_shots)
-        launch_exp(execution, device, utility, n_qubits=n_qubits, num_shots=num_shots)
+        launch_exp(execution, device, utility, n_qubits=n_qubits, num_shots=num_shots, directory=directory)
         return
 
     try:
         counts = result.get_counts("envariance")
     except Exception:
         logger.critical('Exception occurred, retrying\nQubits %d - Execution %d - Shots %d', n_qubits, execution, num_shots)
-        launch_exp(execution, device, utility, n_qubits=n_qubits, num_shots=num_shots)
+        launch_exp(execution, device, utility, n_qubits=n_qubits, num_shots=num_shots, directory=directory)
         return
 
     logger.debug('launch_exp() - counts:\n%s', str(counts))
 
     sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 
-    filename = 'Data_Envariance/' + device + '/' + 'execution' + str(
+    filename = directory + device + '/' + 'execution' + str(
         execution) + '/' + device + '_' + str(num_shots) + '_' + str(
         n_qubits) + '_qubits_envariance.txt'
     os.makedirs(os.path.dirname(filename), exist_ok=True)
@@ -227,9 +229,6 @@ shots = [
 logger.info('Started')
 
 utility_qx4 = Utility(coupling_map_qx4)
-directory = 'Data_Envariance/'
-os.makedirs(os.path.dirname(directory), exist_ok=True)
-
 for execution in range(1, executions+1, 1):
     for n_shots in shots:
         # Comment the experiments you don't want to run
@@ -239,7 +238,7 @@ for execution in range(1, executions+1, 1):
         launch_exp(execution, qx4, utility_qx4, n_qubits=3, num_shots=n_shots)
         logger.info('Qubits %d - Execution %d - Shots %d', 5, execution, n_shots)
         launch_exp(execution, qx4, utility_qx4, n_qubits=5, num_shots=n_shots)
-#
+
 utility_qx4.close()
 
 
@@ -263,7 +262,7 @@ for execution in range(1, executions+1, 1):
         launch_exp(execution, qx5, utility_qx5, n_qubits=14, num_shots=n_shots)
         logger.info('Qubits %d - Execution %d - Shots %d', 16, execution, n_shots)
         launch_exp(execution, qx5, utility_qx5, n_qubits=16, num_shots=n_shots)
-#
+
 utility_qx5.close()
 
 logger.info('All done.')
