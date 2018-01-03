@@ -132,11 +132,9 @@ def launch_exp(execution, device, utility, n_qubits, oracle='11', num_shots=1024
         sleep(900)
         logger.critical('API Exception occurred, retrying\nQubits %d - Oracle %s - Execution %d - Queries %d', n_qubits,
                     oracle,
-                    execution, n_queries)
+                    execution, num_shots)
         launch_exp(execution, device, utility, n_qubits=n_qubits, oracle=oracle, num_shots=num_shots)
         return
-
-    # Q_program.set_api(Qconfig.APItoken, Qconfig.config["url"])  # set the APIToken and API url
 
     quantum_r = Q_program.create_quantum_register("qr", size)
 
@@ -151,13 +149,11 @@ def launch_exp(execution, device, utility, n_qubits, oracle='11', num_shots=1024
 
     logger.debug('launch_exp() - QASM:\n%s', str(QASM_source))
 
-    # result = Q_program.execute(['parity'], backend=device, wait=2, timeout=5000, shots=num_shots, max_credits=5)
-
-    # counts = result.get_counts('parity')
     while True:
         try:
             backend_status = Q_program.get_backend_status(device)
-            if ('available' in backend_status and backend_status['available'] is False) or ('busy' in backend_status and backend_status['busy'] is True):
+            if ('available' in backend_status and backend_status['available'] is False) \
+                    or ('busy' in backend_status and backend_status['busy'] is True):
                 logger.critical('%s currently offline, waiting...', device)
                 while Q_program.get_backend_status(device)['available'] is False:
                     sleep(1800)
@@ -171,26 +167,29 @@ def launch_exp(execution, device, utility, n_qubits, oracle='11', num_shots=1024
             sleep(900)
             continue
         break
+
     if Q_program.get_api().get_my_credits()['remaining'] < 3:
         logger.critical('Qubits %d - Oracle %s - Execution %d - Queries %d ---- Waiting for credits to replenish...',
                     n_qubits, oracle,
-                    execution, n_queries)
+                    execution, num_shots)
         while Q_program.get_api().get_my_credits()['remaining'] < 3:
             sleep(900)
         logger.critical('Credits replenished, resuming execution')
+
     try:
         result = Q_program.execute(['parity'], backend=device, wait=2, timeout=1000, shots=num_shots, max_credits=5)
     except Exception:
         sleep(900)
         logger.critical('Exception occurred, retrying\nQubits %d - Oracle %s - Execution %d - Queries %d', n_qubits, oracle,
-                    execution, n_queries)
+                    execution, num_shots)
         launch_exp(execution, device, utility, n_qubits=n_qubits, oracle=oracle, num_shots=num_shots)
         return
+
     try:
         counts = result.get_counts('parity')
     except Exception:
         logger.critical('Exception occurred, retrying\nQubits %d - Oracle %s - Execution %d - Queries %d', n_qubits, oracle,
-                    execution, n_queries)
+                    execution, num_shots)
         launch_exp(execution, device, utility, n_qubits=n_qubits, oracle=oracle, num_shots=num_shots)
         return
 
@@ -264,7 +263,7 @@ oracles = [
 # launch_exp takes the argument device which can either be qx2, qx3, online_sim or local_sim
 logger.info('Started')
 
-utility = Utility(coupling_map_qx5)
+utility_qx5 = Utility(coupling_map_qx5)
 directory = 'Data_Parity/'
 os.makedirs(os.path.dirname(directory), exist_ok=True)
 
@@ -275,12 +274,12 @@ for execution in range(1, 1 + 1, 1):
         # Comment the experiments you don't want to run
         for n_queries in queries:
             logger.info('Qubits %d - Oracle %s - Execution %d - Queries %d', 3, oracle, execution, n_queries)
-            launch_exp(execution, device, utility, n_qubits=3, oracle=oracle, num_shots=n_queries)
+            launch_exp(execution, device, utility_qx5, n_qubits=3, oracle=oracle, num_shots=n_queries)
             logger.info('Qubits %d - Oracle %s - Execution %d - Queries %d', 9, oracle, execution, n_queries)
-            launch_exp(execution, device, utility, n_qubits=9, oracle=oracle, num_shots=n_queries)
+            launch_exp(execution, device, utility_qx5, n_qubits=9, oracle=oracle, num_shots=n_queries)
             logger.info('Qubits %d - Oracle %s - Execution %d - Queries %d', 16, oracle, execution, n_queries)
-            launch_exp(execution, device, utility, n_qubits=16, oracle=oracle, num_shots=n_queries)
+            launch_exp(execution, device, utility_qx5, n_qubits=16, oracle=oracle, num_shots=n_queries)
 
-utility.close()
+utility_qx5.close()
 
 logger.info('All done.')
