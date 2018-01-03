@@ -22,7 +22,7 @@ sys.path.append(  # solve the relative dependencies if you clone QISKit from the
 from qiskit import QuantumProgram
 import Qconfig
 
-logger = logging.getLogger('envariance')
+logger = logging.getLogger('parity')
 logger.addHandler(myLogger.MyHandler())
 logger.setLevel(logging.INFO)
 logger.propagate = False
