@@ -267,7 +267,7 @@ logger.info('Started')
 
 utility_qx5 = Utility(coupling_map_qx5)
 
-for execution in range(1, 1 + 1, 1):
+for execution in range(1, executions + 1, 1):
 
     for oracle in oracles:
 

@@ -16,14 +16,6 @@ logger.propagate = False
 
 
 class Utility(object):
-    # __coupling_map = dict()
-    # __inverse_coupling_map = dict()
-    # __plain_map = dict()
-    # __path = dict()
-    # __n_qubits = 0
-    # __ranks = dict()
-    # __connected = dict()
-    # __most_connected = []
 
     def __init__(self, coupling_map):
         self.__coupling_map = dict()
@@ -38,20 +30,13 @@ class Utility(object):
             self.__coupling_map = coupling_map.copy()
             logger.log(logging.DEBUG, 'init() - coupling_map:\n%s', str(self.__coupling_map))
             self.invert_graph(coupling_map, self.__inverse_coupling_map)
-            # logger.log(logging.DEBUG, 'init() - inverse coupling map:\n%s', str(self.__inverse_coupling_map))
+            logger.log(logging.DEBUG, 'init() - inverse coupling map:\n%s', str(self.__inverse_coupling_map))
             for i in coupling_map:
-                # self.__plain_map.update({i: coupling_map[i]})
-                controlled = coupling_map[i]
-                self.__plain_map.update({i: []})
-                for j in coupling_map:
-                    if i in coupling_map[j]:
-                        self.__plain_map[i] = self.__plain_map[i] + [j]
-                self.__plain_map[i] = self.__plain_map[i] + controlled
-            logger.log(logging.DEBUG, 'init() - plain map:\n%s', str(self.__plain_map))
+                self.__plain_map.update({i: self.__inverse_coupling_map[i] + coupling_map[i]})
+            logger.debug('init() - plain map:\n%s', str(self.__plain_map))
             self.start_explore(self.__coupling_map, self.__ranks)
             self.__most_connected = self.find_max(self.__ranks)
-            self.create_path(self.__most_connected[0],  # inverse_map=self.__inverse_coupling_map,
-                             plain_map=self.__plain_map)
+            self.create_path(self.__most_connected[0], plain_map=self.__plain_map)
         else:
             logger.critical('init() - Null argument: coupling_map')
             exit(1)
@@ -105,22 +90,10 @@ class Utility(object):
         return found
 
     # create a valid path that connect qubits used in the circuit
-    def create_path(self, start, plain_map,  # inverse_map
-                    ):
+    def create_path(self, start, plain_map):
         self.__path.update({start: -1})
         to_connect = [start] + plain_map[start]
         count = len(self.__coupling_map) - 1
-        # for visiting in to_connect:
-        #     if count <= 0:
-        #         break
-        #     for node in inverse_map[visiting]:
-        #         if count <= 0:
-        #             break
-        #         if node not in self.__path:
-        #             self.__path.update({node: visiting})
-        #             if node not in to_connect:
-        #                 to_connect.append(node)
-        #             count -= 1
         changed = True
         while changed is True and count > 0:
             changed = False
@@ -238,20 +211,17 @@ class Utility(object):
         self.measure(circuit, quantum_r, classical_r)
 
     def envariance(self, circuit, quantum_r, classical_r, n_qubits):
-        connected = []
         self.create(circuit, quantum_r, classical_r, n_qubits)
         sorted_c = sorted(self.__connected.items(), key=operator.itemgetter(0))
-        for i in sorted_c:
-            connected.append(i[0])
+        connected = list(zip(*sorted_c))[0]
+        logger.debug('envariance() - connected:\n%s', str(connected))
         self.__n_qubits = 0
         self.__connected.clear()
         return connected
 
     def parity(self, circuit, quantum_r, classical_r, n_qubits, oracle='11'):
-        connected = []
         self.create(circuit, quantum_r, classical_r, n_qubits, x=False, oracle=oracle)
-        for i in self.__connected:
-            connected.append(i)
+        connected = list(self.__connected.keys())
         logger.debug('parity() - connected:\n%s', str(connected))
         self.__n_qubits = 0
         self.__connected.clear()
