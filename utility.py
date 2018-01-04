@@ -16,24 +16,32 @@ logger.propagate = False
 
 
 class Utility(object):
-    __coupling_map = dict()
+    # __coupling_map = dict()
     # __inverse_coupling_map = dict()
-    __plain_map = dict()
-    __path = dict()
-    __n_qubits = 0
-    __ranks = dict()
-    __connected = dict()
-    __most_connected = []
+    # __plain_map = dict()
+    # __path = dict()
+    # __n_qubits = 0
+    # __ranks = dict()
+    # __connected = dict()
+    # __most_connected = []
 
     def __init__(self, coupling_map):
+        self.__coupling_map = dict()
+        self.__inverse_coupling_map = dict()
+        self.__plain_map = dict()
+        self.__path = dict()
+        self.__n_qubits = 0
+        self.__ranks = dict()
+        self.__connected = dict()
+        self.__most_connected = []
         if coupling_map:
             self.__coupling_map = coupling_map.copy()
             logger.log(logging.DEBUG, 'init() - coupling_map:\n%s', str(self.__coupling_map))
-            # self.invert_graph(coupling_map, self.__inverse_coupling_map)
+            self.invert_graph(coupling_map, self.__inverse_coupling_map)
             # logger.log(logging.DEBUG, 'init() - inverse coupling map:\n%s', str(self.__inverse_coupling_map))
             for i in coupling_map:
                 # self.__plain_map.update({i: coupling_map[i]})
-                controlled = coupling_map[i];
+                controlled = coupling_map[i]
                 self.__plain_map.update({i: []})
                 for j in coupling_map:
                     if i in coupling_map[j]:
@@ -50,7 +58,7 @@ class Utility(object):
 
     def close(self):
         self.__ranks.clear()
-        # self.__inverse_coupling_map.clear()
+        self.__inverse_coupling_map.clear()
         self.__coupling_map.clear()
         self.__path.clear()
         self.__most_connected.clear()
