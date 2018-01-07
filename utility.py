@@ -92,7 +92,7 @@ class Utility(object):
     # create a valid path that connect qubits used in the circuit
     def create_path(self, start, plain_map):
         self.__path.update({start: -1})
-        to_connect = [start] + plain_map[start]
+        to_connect = [start] + self.__inverse_coupling_map[start]
         count = len(self.__coupling_map) - 1
         changed = True
         while changed is True and count > 0:
