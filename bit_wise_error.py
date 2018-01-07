@@ -30,23 +30,38 @@ oracles = [
     '11'
 ]
 
-n_qubits = 16
+n_qubits = 9
 
-queries = []
+queries = [
+    5,
+    10,
+    15,
+    20,
+    25,
+    30,
+    35,
+    40,
+    45,
+    50,
+    75,
+    100,
+    200,
+    500
+]
 
-executions = 100
+executions = 200
 
 directory = 'Data_Parity/' + device + '/'
 
 logger.info('Started')
 
-for n_queries in range(5, 55, 5):
-    queries.append(n_queries)
-    if n_queries == 50:
-        queries.append(75)
-        queries.append(100)
-        queries.append(200)
-        queries.append(500)
+# for n_queries in range(5, 55, 5):
+#     queries.append(n_queries)
+#     if n_queries == 50:
+#         queries.append(75)
+#         queries.append(100)
+#         queries.append(200)
+#         queries.append(500)
 
 for oracle in oracles:
     a = ''
@@ -60,7 +75,7 @@ for oracle in oracles:
                 a += '1'
             else:
                 a += '0'
-    writef = filename = directory + oracle + '/' + device + '_' + oracle + '_' + str(n_qubits) + '_qubits_parity_bit-wise_error.txt'
+    writef = filename = directory + oracle + '/' + device + '_' + oracle + '_' + str(n_qubits) + '_qubits_parity_bit-wise_error_200.txt'
     os.makedirs(os.path.dirname(writef), exist_ok=True)
     write_f = open(writef, 'a')
     write_f.write('N\t\tError\n\n')
