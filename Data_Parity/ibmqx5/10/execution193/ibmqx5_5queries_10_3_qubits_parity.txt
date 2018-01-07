@@ -1,0 +1,4 @@
+VALUES		COUNTS
+
+010	3
+110	2

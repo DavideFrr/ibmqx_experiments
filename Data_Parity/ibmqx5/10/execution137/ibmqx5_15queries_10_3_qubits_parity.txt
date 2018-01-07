@@ -1,0 +1,4 @@
+VALUES		COUNTS
+
+110	9
+000	6

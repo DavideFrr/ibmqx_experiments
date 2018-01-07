@@ -1,0 +1,4 @@
+VALUES		COUNTS
+
+000	9
+100	1
