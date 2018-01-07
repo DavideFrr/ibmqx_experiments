@@ -159,3 +159,6 @@ re-mapper_ibmqx5_n_qubits_envariance.txt
 hists.py
 Data_Envariance/ibmqx5/execution1/old/
 Data_Envariance/ibmqx4/old/
+Data_Envariance/*.ods
+Data_Envariance/re-mapper_ibmqx3_8192_9_qubits_envariance.txt
+Data_Envariance/*.xlsx
