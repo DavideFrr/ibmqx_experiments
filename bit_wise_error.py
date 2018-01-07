@@ -75,7 +75,7 @@ for oracle in oracles:
                 a += '1'
             else:
                 a += '0'
-    writef = filename = directory + oracle + '/' + device + '_' + oracle + '_' + str(n_qubits) + '_qubits_parity_bit-wise_error_200.txt'
+    writef = filename = directory + oracle + '/' + device + '_' + oracle + '_' + str(n_qubits) + '_qubits_parity_bit-wise_error.txt'
     os.makedirs(os.path.dirname(writef), exist_ok=True)
     write_f = open(writef, 'a')
     write_f.write('N\t\tError\n\n')
