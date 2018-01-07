@@ -127,7 +127,7 @@ class Utility(object):
             exit(3)
 
     # place cnot gates based on the path created in create_path method
-    def place_cx_(self, circuit, quantum_r, oracle='11'):
+    def place_cx(self, circuit, quantum_r, oracle='11'):
         if not oracle == '00':
             logger.log(logging.VERBOSE, 'place_cx() - oracle != 00')
             stop = self.__n_qubits // 2
@@ -204,7 +204,7 @@ class Utility(object):
             count -= 1
         logger.debug('create() - connected:\n%s', str(self.__connected))
         self.place_h(circuit, self.__most_connected[0], quantum_r, x=x)
-        self.place_cx_(circuit, quantum_r, oracle=oracle)
+        self.place_cx(circuit, quantum_r, oracle=oracle)
         self.place_h(circuit, self.__most_connected[0], quantum_r, initial=False)
         if x is True:
             self.place_x(circuit, quantum_r)
