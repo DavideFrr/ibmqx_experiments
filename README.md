@@ -32,12 +32,12 @@ The objective is to assign every node _x_ a rank, defined as the number of nodes
 that can reach _x_ along the directed edges of the coupling map.
 The node with the highest rank is then selected as the starting point for building the circuit.
 
-All of the above is done by the [explore()](https://github.com/DavideFrr/ibmqx_experiments/blob/bf9b5f02a8f7566aa09397f3e151dfa71b35d6c2/utility.py#L93),
+All of the above is done by the [explore()](https://github.com/DavideFrr/ibmqx_experiments/blob/c833012d024cae1ddff7849a5ce2d1fddcb93d0f/utility.py#L51),
 whose objective is to assign a rank (the counter incremented when a node is reached) to
 every node based on how many nodes can reach it. The node with the higher rank will be
 selected as the start point for building our circuit.
 
-As soon as the most connected qubit has been found, the [create_path()](https://github.com/DavideFrr/ibmqx_experiments/blob/bf9b5f02a8f7566aa09397f3e151dfa71b35d6c2/utility.py#L93)
+As soon as the most connected qubit has been found, the [create_path()](https://github.com/DavideFrr/ibmqx_experiments/blob/c833012d024cae1ddff7849a5ce2d1fddcb93d0f/utility.py#L93)
 function is executed, in order to obtain a path connecting all the qubits
 that must be involved in the GHZ circuit.
 
