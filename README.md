@@ -32,27 +32,27 @@ The objective is to assign every node _x_ a rank, defined as the number of nodes
 that can reach _x_ along the directed edges of the coupling map.
 The node with the highest rank is then selected as the starting point for building the circuit.
 
-All of the above is done by the [explore()](https://github.com/DavideFrr/ibmqx_experiments/blob/6349f5a688f927afc0a662f01f060f02b260771c/utility.py#L58),
+All of the above is done by the [explore()](https://github.com/DavideFrr/ibmqx_experiments/blob/bf9b5f02a8f7566aa09397f3e151dfa71b35d6c2/utility.py#L93),
 whose objective is to assign a rank (the counter incremented when a node is reached) to
 every node based on how many nodes can reach it. The node with the higher rank will be
 selected as the start point for building our circuit.
 
-As soon as the most connected qubit has been found, the [create_path()](https://github.com/DavideFrr/ibmqx_experiments/blob/6349f5a688f927afc0a662f01f060f02b260771c/utility.py#L100)
+As soon as the most connected qubit has been found, the [create_path()](https://github.com/DavideFrr/ibmqx_experiments/blob/bf9b5f02a8f7566aa09397f3e151dfa71b35d6c2/utility.py#L93)
 function is executed, in order to obtain a path connecting all the qubits
 that must be involved in the GHZ circuit.
 
-The [place_cx()](https://github.com/DavideFrr/ibmqx_experiments/blob/6349f5a688f927afc0a662f01f060f02b260771c/utility.py#L149)
-function walks the aforementioned path and uses the [cx()](https://github.com/DavideFrr/ibmqx_experiments/blob/6349f5a688f927afc0a662f01f060f02b260771c/utility.py#L133)
+The [place_cx()](https://github.com/DavideFrr/ibmqx_experiments/blob/bf9b5f02a8f7566aa09397f3e151dfa71b35d6c2/utility.py#L130)
+function walks the aforementioned path and uses the [cx()](https://github.com/DavideFrr/ibmqx_experiments/blob/bf9b5f02a8f7566aa09397f3e151dfa71b35d6c2/utility.py#L114)
 function to put across each node pair either a CNOT or an inverse-CNOT gate,
 depending on the direction of the link dictated by the coupling map.
-Parameter _k_ in [place_cnot()](https://github.com/DavideFrr/ibmqx_experiments/blob/6349f5a688f927afc0a662f01f060f02b260771c/utility.py#L149)
+Parameter _k_ in [place_cx()](https://github.com/DavideFrr/ibmqx_experiments/blob/bf9b5f02a8f7566aa09397f3e151dfa71b35d6c2/utility.py#L130)
 allows to reuse the function to build other circuits
 than GHZ. More specifically, _k=11_ corresponds to the GHZ circuit.
 
-Before launching an experiment on a specific device, you'll have to create a new [Utility()](https://github.com/DavideFrr/ibmqx_experiments/blob/6349f5a688f927afc0a662f01f060f02b260771c/utility.py#L28)
+Before launching an experiment on a specific device, you'll have to create a new [Utility()](https://github.com/DavideFrr/ibmqx_experiments/blob/bf9b5f02a8f7566aa09397f3e151dfa71b35d6c2/utility.py#L18)
 object, the constructor takes the device coupling-map as a parameter;
 when you're done experimenting with that device you'll
-then need to [close()](https://github.com/DavideFrr/ibmqx_experiments/blob/6349f5a688f927afc0a662f01f060f02b260771c/utility.py#L51)
+then need to [close()](https://github.com/DavideFrr/ibmqx_experiments/blob/bf9b5f02a8f7566aa09397f3e151dfa71b35d6c2/utility.py#L44)
 the Utility object.
 
 _ibmqx5 coupling-map graphic rapresentation_:
@@ -88,7 +88,7 @@ _Red arrows means the use of inverse cnot_
 ## Envariance
 
 [envariance.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/envariance.py)
-is were you'll find all you need to tun envariance experiments; the [launch_exp()](https://github.com/DavideFrr/ibmqx_experiments/blob/6349f5a688f927afc0a662f01f060f02b260771c/envariance.py#L104)
+is were you'll find all you need to tun envariance experiments; the [launch_exp()](https://github.com/DavideFrr/ibmqx_experiments/blob/bf9b5f02a8f7566aa09397f3e151dfa71b35d6c2/envariance.py#L99)
 function will run the circuit for the given number of qubit, shots and coupling-map on the given
 device.
 
@@ -99,17 +99,26 @@ and after that another swap to the remaining
 ![n/2](http://latex.codecogs.com/gif.latex?\left&space;\lfloor&space;n/2&space;\right&space;\rfloor)
 qubits.
 
-All results of the executions will be stored in txt and xlsx files for later use.
+All results of the executions will be stored in txt files for later use.
 More info in the code.
 
 # ![qx4_5-qubits_env_circ](images/qx4_5-qubits_env_circ.png)
 # ![qx5_16-qubits_env_circ](images/qx5_16-qubits_env_circ.png)
 _Envariance circuits with 5 qubits and 16 qubits, for QX4 and QX5 respectively_
 
+## Fidelity
+
+You can use [fidelity.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/fidelity.py)
+to estimate the classical fidelity of every execution and average them together. It is also possibile to
+use [envariance_values_base2.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/envariance_values_base2.py)
+and [envariance_values_base10.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/envariance_values_base10.py)
+to se an overall distribution of
+all the strings values measured during all executions (encoded in base 2 and 10 respectively).
+
 ## Parity
 
 [parity.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/parity.py)
-will run parity learning experiments; the [launch_exp()](https://github.com/DavideFrr/ibmqx_experiments/blob/6349f5a688f927afc0a662f01f060f02b260771c/parity.py#L98)
+will run parity learning experiments; the [launch_exp()](https://github.com/DavideFrr/ibmqx_experiments/blob/bf9b5f02a8f7566aa09397f3e151dfa71b35d6c2/parity.py#L99)
 function will run the circuit for the given number of qubit, queries, coupling-map and _k_;
 _k_ can either be '11', '10' or '00' and represent the type of string that will be learned
 by the oracle.
@@ -122,7 +131,7 @@ More info in the code.
 # ![qx5_16-qubits_par-11_circ](images/qx5_16-qubits_par-11_circ.png)
 _Parity circuits with 15 qubits on QX5, for k='00', k='10' and k='11' respectively_
 
-# Bit-Wise Error
+## Bit-Wise Error
 
 For the parity learning experiment, provided the noise isn’t too large,
 each bit of the output is still correct more than half the time. What we do is:
