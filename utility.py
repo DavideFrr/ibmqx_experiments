@@ -106,23 +106,30 @@ class Utility(object):
     # create a valid path that connect qubits used in the circuit
     def create_path(self, start, plain_map):
         self.__path.update({start: -1})
-        to_connect = [start] + self.__inverse_coupling_map[start]
-        count = len(self.__coupling_map) - 1
+        to_connect = [start]
+        max = len(self.__coupling_map)
+        logger.debug('create_path() - max:\n%s', str(max))
+        count = max - 1
         changed = True
-        while changed is True and count > 0:
+        visiting = 0
+        while changed is True or count > 0:
             changed = False
-            for visiting in to_connect:
+            logger.debug('create_path() - visiting:\n%s - %s', str(visiting), str(to_connect[visiting]))
+            # for visiting in to_connect:
+            if count <= 0:
+                break
+            for node in plain_map[to_connect[visiting]]:
                 if count <= 0:
                     break
-                for node in plain_map[visiting]:
-                    if count <= 0:
-                        break
-                    if node not in self.__path:
-                        self.__path.update({node: visiting})
-                        if node not in to_connect:
-                            to_connect.append(node)
-                            changed = True;
-                        count -= 1
+                if node not in self.__path:
+                    self.__path.update({node: to_connect[visiting]})
+                    count -= 1
+                    logger.debug('create_path() - path:\n%s', str(self.__path))
+                    if node not in to_connect:
+                        to_connect.append(node)
+                        changed = True
+                # to_connect.remove(visiting)
+            visiting += 1
         logger.debug('create_path() - path:\n%s', str(self.__path))
 
     def cx(self, circuit, control_qubit, target_qubit, control, target):
