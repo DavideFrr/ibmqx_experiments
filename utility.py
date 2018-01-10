@@ -112,8 +112,7 @@ class Utility(object):
         count = max - 1
         changed = True
         visiting = 0
-        while changed is True or count > 0:
-            changed = False
+        while count > 0:
             logger.debug('create_path() - visiting:\n%s - %s', str(visiting), str(to_connect[visiting]))
             # for visiting in to_connect:
             if count <= 0:
@@ -127,8 +126,6 @@ class Utility(object):
                     logger.debug('create_path() - path:\n%s', str(self.__path))
                     if node not in to_connect:
                         to_connect.append(node)
-                        changed = True
-                # to_connect.remove(visiting)
             visiting += 1
         logger.debug('create_path() - path:\n%s', str(self.__path))
 
