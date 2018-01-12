@@ -88,7 +88,7 @@ _Red arrows means the use of inverse cnot_
 ## Envariance
 
 [envariance.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/envariance.py)
-is were you'll find all you need to tun envariance experiments; the [launch_exp()](https://github.com/DavideFrr/ibmqx_experiments/blob/bf9b5f02a8f7566aa09397f3e151dfa71b35d6c2/envariance.py#L99)
+is were you'll find all you need to tun envariance experiments; the [launch_exp()](https://github.com/DavideFrr/ibmqx_experiments/blob/ae9febb703fcb17b767528f7100557eb39d653e3/envariance.py#L60)
 function will run the circuit for the given number of qubit, shots and coupling-map on the given
 device.
 
@@ -118,7 +118,7 @@ all the strings values measured during all executions (encoded in base 2 and 10 
 ## Parity
 
 [parity.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/parity.py)
-will run parity learning experiments; the [launch_exp()](https://github.com/DavideFrr/ibmqx_experiments/blob/bf9b5f02a8f7566aa09397f3e151dfa71b35d6c2/parity.py#L99)
+will run parity learning experiments; the [launch_exp()](https://github.com/DavideFrr/ibmqx_experiments/blob/ae9febb703fcb17b767528f7100557eb39d653e3/parity.py#L60)
 function will run the circuit for the given number of qubit, queries, coupling-map and _k_;
 _k_ can either be '11', '10' or '00' and represent the type of string that will be learned
 by the oracle.
