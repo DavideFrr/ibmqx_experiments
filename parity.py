@@ -27,6 +27,7 @@ import os
 import operator
 
 from utility import Utility
+import  coupling_maps
 
 import sys
 
@@ -40,60 +41,6 @@ logger = logging.getLogger('parity')
 logger.addHandler(myLogger.MyHandler())
 logger.setLevel(logging.INFO)
 logger.propagate = False
-
-coupling_map_qx2 = {
-    0: [1, 2],
-    1: [2],
-    2: [],
-    3: [2, 4],
-    4: [2],
-}
-
-coupling_map_qx3 = {
-    0: [1],
-    1: [2],
-    2: [3],
-    3: [14],
-    4: [3, 5],
-    5: [],
-    6: [7, 11],
-    7: [10],
-    8: [7],
-    9: [8, 10],
-    10: [],
-    11: [10],
-    12: [5, 11, 13],
-    13: [4, 14],
-    14: [],
-    15: [0, 14],
-}
-
-coupling_map_qx4 = {
-    0: [],
-    1: [0],
-    2: [0, 1, 4],
-    3: [2, 4],
-    4: [],
-}
-
-coupling_map_qx5 = {
-    0: [],
-    1: [0, 2],
-    2: [3],
-    3: [4, 14],
-    4: [],
-    5: [4],
-    6: [5, 7, 11],
-    7: [10],
-    8: [7],
-    9: [8, 10],
-    10: [],
-    11: [10],
-    12: [5, 11, 13],
-    13: [4, 14],
-    14: [],
-    15: [0, 2, 14],
-}
 
 # Back-end devices
 qx2 = 'ibmqx2'
@@ -279,7 +226,7 @@ oracles = [
 # launch_exp takes the argument device which can either be qx2, qx3, online_sim or local_sim
 logger.info('Started')
 
-utility_qx5 = Utility(coupling_map_qx5)
+utility_qx5 = Utility(coupling_maps.qx5)
 
 for execution in range(1, executions + 1, 1):
 
