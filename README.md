@@ -104,7 +104,7 @@ More info in the code.
 
 # ![qx4_5-qubits_env_circ](images/qx4_5-qubits_env_circ.png)
 # ![qx5_16-qubits_env_circ](images/qx5_16-qubits_env_circ.png)
-_Envariance circuits with 5 qubits and 16 qubits, for QX4 and QX5 respectively_
+_Envariance circuits with 5 qubits and 16 qubits, on QX4 and QX5 respectively_
 
 ## Fidelity
 
