@@ -144,5 +144,5 @@ Every time the resulting string is correct we have a success, dividing
 the number of successes by the number of executions we obtain the success probability
 and also the error probability.
 
-All of ti can be done by running [bit_wise_error.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/bit_wise_error.py),
+All of it can be done by running [bit_wise_error.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/bit_wise_error.py),
 which will store the results in a txt file.
