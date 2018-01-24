@@ -55,6 +55,11 @@ when you're done experimenting with that device you'll
 then need to [close()](https://github.com/DavideFrr/ibmqx_experiments/blob/bf9b5f02a8f7566aa09397f3e151dfa71b35d6c2/utility.py#L44)
 the Utility object.
 
+In order to launch an exepriment, [utility.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/utility.py)
+defines two methods ([envariance_exec()](https://github.com/DavideFrr/ibmqx_experiments/blob/09ae04ef4056badcc38804fed38f44570ba63669/utility.py#L261)
+and ([parity_exec()](https://github.com/DavideFrr/ibmqx_experiments/blob/09ae04ef4056badcc38804fed38f44570ba63669/utility.py#L386))
+which use will be discussed later on.
+
 _ibmqx5 coupling-map graphic rapresentation_:
 # ![qx5_coupling-map](images/qx5_coupling-map.png)
 
@@ -88,16 +93,17 @@ _Red arrows means the use of inverse cnot_
 ## Envariance
 
 [envariance.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/envariance.py)
-is were you'll find all you need to tun envariance experiments; the [launch_exp()](https://github.com/DavideFrr/ibmqx_experiments/blob/ae9febb703fcb17b767528f7100557eb39d653e3/envariance.py#L60)
-function will run the circuit for the given number of qubit, shots and coupling-map on the given
-device.
-
-After obtaining the GHZ state, envariance can be experimented by performing a swap,
-using Pauli-X gates, on the first
-![n/2](http://latex.codecogs.com/gif.latex?\left&space;\lceil&space;n/2&space;\right&space;\rceil)
-and after that another swap to the remaining
-![n/2](http://latex.codecogs.com/gif.latex?\left&space;\lfloor&space;n/2&space;\right&space;\rfloor)
-qubits.
+is were you'll launch envariance experiments; all you need to do is to create utility object (the constructor takes the device
+coupling-map as its only parameter,
+coupling-maps can be imported from [couplings_maps.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/coupling_maps.py))
+and then use the [envariance_exec()](https://github.com/DavideFrr/ibmqx_experiments/blob/09ae04ef4056badcc38804fed38f44570ba63669/utility.py#L261)
+method to launch the experiment. This methods needs several parameter:
+- _execution_, the number of the execution in case you're running the experiment multiple times
+- _device_, the device on wich yuo want to run the experiment (you can import device name from [devices.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/devices.py))
+- _utility_, the utility object created before
+- _n_qubits_, the number of qubits to be used
+- _num_shots_, number of shots fro the execution (default to 1024)
+- _directory_, the directory to store experiments results (default to 'Data_Envariance/')
 
 All results of the executions will be stored in txt files for later use.
 More info in the code.
@@ -117,13 +123,16 @@ all the strings values measured during all executions (encoded in base 2 and 10 
 
 ## Parity
 
-[parity.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/parity.py)
-will run parity learning experiments; the [launch_exp()](https://github.com/DavideFrr/ibmqx_experiments/blob/ae9febb703fcb17b767528f7100557eb39d653e3/parity.py#L60)
-function will run the circuit for the given number of qubit, queries, coupling-map and _k_;
-_k_ can either be '11', '10' or '00' and represent the type of string that will be learned
-by the oracle.
+In [parity.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/parity.py)
+you will run parity learning experiments;
+as for envariance experiments there's a method to launch this kind of experiment,
+[parity_exec()](https://github.com/DavideFrr/ibmqx_experiments/blob/09ae04ef4056badcc38804fed38f44570ba63669/utility.py#L386).
 
-All results of the executions will be stored in txt files for later use.
+The only difference is that it takes an extra parameter to set the string that the oracle will learn:
+- _oracle_, can either be '11' for '11..11' like strings, '10' for '10..10' strings or '00' for '00..00' strings
+
+All results of the executions will be stored
+(by default in 'Data_Parity', you can change it with the _directory_ parameter)in txt files for later use.
 More info in the code.
 
 # ![qx5_16-qubits_par-00_circ](images/qx5_16-qubits_par-00_circ.png)
