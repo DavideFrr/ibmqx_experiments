@@ -19,9 +19,20 @@ __license__ = "Apache"
 __version__ = "2.0"
 __email__ = "davide.ferrari8@studenti.unipr.it"
 
+import os
+from time import sleep
+from devices import *
 import logging
 import myLogger
 import operator
+
+import sys
+
+sys.path.append(  # solve the relative dependencies if you clone QISKit from the Git repo and use like a global.
+    "../qiskit-sdk-py")
+
+from qiskit import QuantumProgram
+import Qconfig
 
 logger = logging.getLogger('utility')
 logger.addHandler(myLogger.MyHandler())
@@ -244,3 +255,264 @@ class Utility(object):
         self.__n_qubits = 0
         self.__connected.clear()
         return connected
+
+
+# launch envariance experiment on the given device
+def envariance_exec(execution, device, utility, n_qubits, num_shots=1024, directory='Data_Envariance/'):
+    os.makedirs(os.path.dirname(directory), exist_ok=True)
+
+    size = 0
+
+    results = dict()
+
+    if device == qx2 or device == qx4:
+        if n_qubits <= 5:
+            size = 5
+            # device = 'ibmqx_qasm_simulator'
+        else:
+            logger.critical('launch_exp() - Too much qubits for %s !', device)
+            exit(1)
+    elif device == qx3 or device == qx5:
+        if n_qubits <= 16:
+            size = 16
+            # device = 'ibmqx_qasm_simulator'
+        else:
+            logger.critical('launch_exp() - Too much qubits for %s !', device)
+            exit(2)
+    elif device == online_sim:
+        if n_qubits <= 5:
+            size = 5
+        elif n_qubits <= 16:
+            size = 16
+    else:
+        logger.critical('launch_exp() - Unknown device.')
+        exit(3)
+
+    Q_program = QuantumProgram()
+
+    try:
+        Q_program.set_api(Qconfig.APItoken, Qconfig.config["url"])  # set the APIToken and API url
+    except ConnectionError:
+        sleep(900)
+        logger.critical('API Exception occurred, retrying\nQubits %d - Execution %d - Shots %d', n_qubits, execution,
+                        num_shots)
+        envariance_exec(execution, device, utility, n_qubits=n_qubits, num_shots=num_shots, directory=directory)
+        return
+
+    quantum_r = Q_program.create_quantum_register("qr", size)
+
+    classical_r = Q_program.create_classical_register("cr", size)
+
+    circuit = Q_program.create_circuit("envariance", [quantum_r], [classical_r])
+
+    connected = utility.envariance(circuit=circuit, quantum_r=quantum_r, classical_r=classical_r, n_qubits=n_qubits)
+
+    QASM_source = Q_program.get_qasm("envariance")
+
+    logger.debug('launch_exp() - QASM:\n%s', str(QASM_source))
+
+    while True:
+        try:
+            backend_status = Q_program.get_backend_status(device)
+            if ('available' in backend_status and backend_status['available'] is False) \
+                    or ('busy' in backend_status and backend_status['busy'] is True):
+                logger.critical('%s currently offline, waiting...', device)
+                while Q_program.get_backend_status(device)['available'] is False:
+                    sleep(1800)
+                logger.critical('%s is back online, resuming execution', device)
+        except ConnectionError:
+            logger.critical('Error getting backend status, retrying...')
+            sleep(900)
+            continue
+        except ValueError:
+            logger.critical('Backend is not available, waiting...')
+            sleep(900)
+            continue
+        break
+
+    if Q_program.get_api().get_my_credits()['remaining'] < 3:
+        logger.critical('Qubits %d - Execution %d - Shots %d ---- Waiting for credits to replenish...',
+                        n_qubits, execution, num_shots)
+        while Q_program.get_api().get_my_credits()['remaining'] < 3:
+            sleep(900)
+        logger.critical('Credits replenished, resuming execution')
+
+    try:
+        result = Q_program.execute(["envariance"], backend=device, wait=2, timeout=1000, shots=num_shots, max_credits=5)
+    except Exception:
+        sleep(900)
+        logger.critical('Exception occurred, retrying\nQubits %d - Execution %d - Shots %d', n_qubits, execution,
+                        num_shots)
+        envariance_exec(execution, device, utility, n_qubits=n_qubits, num_shots=num_shots, directory=directory)
+        return
+
+    try:
+        counts = result.get_counts("envariance")
+    except Exception:
+        logger.critical('Exception occurred, retrying\nQubits %d - Execution %d - Shots %d', n_qubits, execution,
+                        num_shots)
+        envariance_exec(execution, device, utility, n_qubits=n_qubits, num_shots=num_shots, directory=directory)
+        return
+
+    logger.debug('launch_exp() - counts:\n%s', str(counts))
+
+    sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
+
+    filename = directory + device + '/' + 'execution' + str(
+        execution) + '/' + device + '_' + str(num_shots) + '_' + str(
+        n_qubits) + '_qubits_envariance.txt'
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    out_f = open(filename, 'w')
+
+    # store counts in txt file and xlsx file
+    out_f.write('VALUES\t\tCOUNTS\n\n')
+
+    stop = n_qubits // 2
+    for i in sorted_c:
+        reverse = i[0][::-1]
+        sorted_v = []
+        for n in range(n_qubits - stop):
+            sorted_v.append(reverse[connected[n + stop]])
+        for n in range(stop):
+            sorted_v.append(reverse[connected[n]])
+        value = ''.join(str(v) for v in sorted_v)
+        results.update({value: i[1]})
+        out_f.write(value + '\t' + str(i[1]) + '\n')
+
+    out_f.close()
+
+
+# launch parity experiment on the given device
+def parity_exec(execution, device, utility, n_qubits, oracle='11', num_shots=1024, directory='Data_Parity/'):
+    os.makedirs(os.path.dirname(directory), exist_ok=True)
+
+    size = 0
+
+    results = dict()
+
+    if device == qx2 or device == qx4:
+        if n_qubits <= 5:
+            size = 5
+            # device = 'ibmqx_qasm_simulator'
+        else:
+            logger.critical('launch_exp() - Too much qubits for %s !', device)
+            exit(1)
+    elif device == qx3 or device == qx5:
+        if n_qubits <= 16:
+            size = 16
+            # device = 'ibmqx_qasm_simulator'
+        else:
+            logger.critical('launch_exp() - Too much qubits for %s !', device)
+            exit(2)
+    elif device == online_sim:
+        if n_qubits <= 5:
+            size = 5
+        elif n_qubits <= 16:
+            size = 16
+    else:
+        logger.critical('launch_exp() - Unknown device.')
+        exit(3)
+
+    Q_program = QuantumProgram()
+
+    try:
+        Q_program.set_api(Qconfig.APItoken, Qconfig.config["url"])  # set the APIToken and API url
+    except ConnectionError:
+        sleep(900)
+        logger.critical('API Exception occurred, retrying\nQubits %d - Oracle %s - Execution %d - Queries %d', n_qubits,
+                    oracle,
+                    execution, num_shots)
+        parity_exec(execution, device, utility, n_qubits=n_qubits, oracle=oracle, num_shots=num_shots, directory=directory)
+        return
+
+    quantum_r = Q_program.create_quantum_register("qr", size)
+
+    classical_r = Q_program.create_classical_register("cr", size)
+
+    circuit = Q_program.create_circuit('parity', [quantum_r], [classical_r])
+
+    connected = utility.parity(circuit=circuit, quantum_r=quantum_r, classical_r=classical_r, n_qubits=n_qubits,
+                               oracle=oracle)
+
+    QASM_source = Q_program.get_qasm('parity')
+
+    logger.debug('launch_exp() - QASM:\n%s', str(QASM_source))
+
+    while True:
+        try:
+            backend_status = Q_program.get_backend_status(device)
+            if ('available' in backend_status and backend_status['available'] is False) \
+                    or ('busy' in backend_status and backend_status['busy'] is True):
+                logger.critical('%s currently offline, waiting...', device)
+                while Q_program.get_backend_status(device)['available'] is False:
+                    sleep(1800)
+                logger.critical('%s is back online, resuming execution', device)
+        except ConnectionError:
+            logger.critical('Error getting backend status, retrying...')
+            sleep(900)
+            continue
+        except ValueError:
+            logger.critical('Backend is not available, waiting...')
+            sleep(900)
+            continue
+        break
+
+    if Q_program.get_api().get_my_credits()['remaining'] < 3:
+        logger.critical('Qubits %d - Oracle %s - Execution %d - Queries %d ---- Waiting for credits to replenish...',
+                    n_qubits, oracle,
+                    execution, num_shots)
+        while Q_program.get_api().get_my_credits()['remaining'] < 3:
+            sleep(900)
+        logger.critical('Credits replenished, resuming execution')
+
+    try:
+        result = Q_program.execute(['parity'], backend=device, wait=2, timeout=1000, shots=num_shots, max_credits=5)
+    except Exception:
+        sleep(900)
+        logger.critical('Exception occurred, retrying\nQubits %d - Oracle %s - Execution %d - Queries %d', n_qubits, oracle,
+                    execution, num_shots)
+        parity_exec(execution, device, utility, n_qubits=n_qubits, oracle=oracle, num_shots=num_shots, directory=directory)
+        return
+
+    try:
+        counts = result.get_counts('parity')
+    except Exception:
+        logger.critical('Exception occurred, retrying\nQubits %d - Oracle %s - Execution %d - Queries %d', n_qubits, oracle,
+                    execution, num_shots)
+        parity_exec(execution, device, utility, n_qubits=n_qubits, oracle=oracle, num_shots=num_shots, directory=directory)
+        return
+
+    logger.debug('launch_exp() - counts:\n%s', str(counts))
+
+    sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
+
+    filename = directory + device + '/' + oracle + '/' + 'execution' + str(
+        execution) + '/' + device + '_' + str(
+        num_shots) + 'queries_' + oracle + '_' + str(
+        n_qubits) + '_qubits_parity.txt'
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    out_f = open(filename, 'w')
+
+    # store counts in txt file and xlsx file
+    out_f.write('VALUES\t\tCOUNTS\n\n')
+    logger.debug('launch_exp() - oredred_q:\n%s', str(connected))
+    stop = n_qubits // 2
+    for i in sorted_c:
+        reverse = i[0][::-1]
+        logger.log(logging.VERBOSE, 'launch_exp() - reverse in for 1st loop: %s', str(reverse))
+        sorted_v = [reverse[connected[0]]]
+        logger.log(logging.VERBOSE, 'launch_exp() - connected[0] in 1st for loop: %s', str(connected[0]))
+        logger.log(logging.VERBOSE, 'launch_exp() - sorted_v in 1st for loop: %s', str(sorted_v))
+        for n in range(stop):
+            sorted_v.append(reverse[connected[n + 1]])
+            logger.log(logging.VERBOSE, 'launch_exp() - connected[n+1], sorted_v[n+1] in 2nd for loop: %s,%s',
+                       str(connected[n + 1]), str(sorted_v[n + 1]))
+            if (n + stop + 1) != n_qubits:
+                sorted_v.append(reverse[connected[n + stop + 1]])
+                logger.log(logging.VERBOSE, 'launch_exp() - connected[n+stop+1], sorted_v[n+2] in 2nd for loop: %s%s',
+                           str(connected[n + stop + 1]), str(sorted_v[n + 2]))
+        value = ''.join(str(v) for v in sorted_v)
+        results.update({value: i[1]})
+        out_f.write(value + '\t' + str(i[1]) + '\n')
+
+    out_f.close()
