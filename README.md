@@ -104,7 +104,7 @@ More info in the code.
 
 # ![qx4_5-qubits_env_circ](images/qx4_5-qubits_env_circ.png)
 # ![qx5_16-qubits_env_circ](images/qx5_16-qubits_env_circ.png)
-_Envariance circuits with 5 qubits and 16 qubits, for QX4 and QX5 respectively_
+_Envariance circuits with 5 qubits and 16 qubits, on QX4 and QX5 respectively_
 
 ## Fidelity
 
@@ -144,5 +144,5 @@ Every time the resulting string is correct we have a success, dividing
 the number of successes by the number of executions we obtain the success probability
 and also the error probability.
 
-All of ti can be done by running [bit_wise_error.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/bit_wise_error.py),
+All of it can be done by running [bit_wise_error.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/bit_wise_error.py),
 which will store the results in a txt file.
