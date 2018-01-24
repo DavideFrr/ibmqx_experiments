@@ -57,7 +57,7 @@ the Utility object.
 
 In order to launch an exepriment, [utility.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/utility.py)
 defines two methods ([envariance_exec()](https://github.com/DavideFrr/ibmqx_experiments/blob/09ae04ef4056badcc38804fed38f44570ba63669/utility.py#L261)
-and ([parity_exec()](https://github.com/DavideFrr/ibmqx_experiments/blob/09ae04ef4056badcc38804fed38f44570ba63669/utility.py#L386))
+and [parity_exec()](https://github.com/DavideFrr/ibmqx_experiments/blob/09ae04ef4056badcc38804fed38f44570ba63669/utility.py#L386))
 which use will be discussed later on.
 
 _ibmqx5 coupling-map graphic rapresentation_:
@@ -95,7 +95,7 @@ _Red arrows means the use of inverse cnot_
 [envariance.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/envariance.py)
 is were you'll launch envariance experiments; all you need to do is to create utility object (the constructor takes the device
 coupling-map as its only parameter,
-coupling-maps can be imported from [couplings_maps.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/coupling_maps.py))
+coupling-maps can be imported from [coupling_maps.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/coupling_maps.py))
 and then use the [envariance_exec()](https://github.com/DavideFrr/ibmqx_experiments/blob/09ae04ef4056badcc38804fed38f44570ba63669/utility.py#L261)
 method to launch the experiment. This methods needs several parameter:
 - _execution_, the number of the execution in case you're running the experiment multiple times
