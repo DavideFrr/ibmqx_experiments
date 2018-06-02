@@ -115,7 +115,7 @@ _Envariance circuits with 5 qubits and 16 qubits, on QX4 and QX5 respectively_
 ## Fidelity
 
 You can use [fidelity.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/fidelity.py)
-to estimate the classical fidelity of every execution and average them together. It is also possibile to
+to estimate the classical fidelity of every execution and average them together. It is also possible to
 use [envariance_values_base2.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/envariance_values_base2.py)
 and [envariance_values_base10.py](https://github.com/DavideFrr/ibmqx_experiments/blob/master/envariance_values_base10.py)
 to se an overall distribution of
