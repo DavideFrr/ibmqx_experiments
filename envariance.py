@@ -23,7 +23,7 @@ import logging
 import myLogger
 
 from utility import *
-from devices import *
+from backends import *
 import coupling_maps
 
 logger = logging.getLogger('envariance')
@@ -42,7 +42,7 @@ shots = [
 # launch_exp takes the argument device from devices module
 logger.info('Started')
 
-utility_qx4 = Utility(coupling_maps.qx4)
+utility_qx4 = Utility(coupling_maps.qx4())
 for execution in range(1, executions+1, 1):
     for n_shots in shots:
         # Comment the experiments you don't want to run
@@ -55,7 +55,7 @@ for execution in range(1, executions+1, 1):
 
 utility_qx4.close()
 
-utility_qx5 = Utility(coupling_maps.qx5)
+utility_qx5 = Utility(coupling_maps.qx5())
 for execution in range(1, executions+1, 1):
     for n_shots in shots:
         # Comment the experiments you don't want to run

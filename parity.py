@@ -23,7 +23,7 @@ import logging
 import myLogger
 
 from utility import *
-from devices import *
+from backends import *
 import coupling_maps
 
 logger = logging.getLogger('parity')
