@@ -15,56 +15,83 @@
 
 # Module for coupling-maps
 
-qx2 = {
-    0: [1, 2],
-    1: [2],
-    2: [],
-    3: [2, 4],
-    4: [2],
-}
+from qiskit import register, get_backend
+import config
 
-qx3 = {
-    0: [1],
-    1: [2],
-    2: [3],
-    3: [14],
-    4: [3, 5],
-    5: [],
-    6: [7, 11],
-    7: [10],
-    8: [7],
-    9: [8, 10],
-    10: [],
-    11: [10],
-    12: [5, 11, 13],
-    13: [4, 14],
-    14: [],
-    15: [0, 14],
-}
 
-qx4 = {
-    0: [],
-    1: [0],
-    2: [0, 1, 4],
-    3: [2, 4],
-    4: [],
-}
+# qx2 = {
+#     0: [1, 2],
+#     1: [2],
+#     2: [],
+#     3: [2, 4],
+#     4: [2],
+# }
+#
+# qx3 = {
+#     0: [1],
+#     1: [2],
+#     2: [3],
+#     3: [14],
+#     4: [3, 5],
+#     5: [],
+#     6: [7, 11],
+#     7: [10],
+#     8: [7],
+#     9: [8, 10],
+#     10: [],
+#     11: [10],
+#     12: [5, 11, 13],
+#     13: [4, 14],
+#     14: [],
+#     15: [0, 14],
+# }
+#
+# qx4 = {
+#     0: [],
+#     1: [0],
+#     2: [0, 1, 4],
+#     3: [2, 4],
+#     4: [],
+# }
+#
+# qx5 = {
+#     0: [],
+#     1: [0, 2],
+#     2: [3],
+#     3: [4, 14],
+#     4: [],
+#     5: [4],
+#     6: [5, 7, 11],
+#     7: [10],
+#     8: [7],
+#     9: [8, 10],
+#     10: [],
+#     11: [10],
+#     12: [5, 11, 13],
+#     13: [4, 14],
+#     14: [],
+#     15: [0, 2, 14],
+# }
 
-qx5 = {
-    0: [],
-    1: [0, 2],
-    2: [3],
-    3: [4, 14],
-    4: [],
-    5: [4],
-    6: [5, 7, 11],
-    7: [10],
-    8: [7],
-    9: [8, 10],
-    10: [],
-    11: [10],
-    12: [5, 11, 13],
-    13: [4, 14],
-    14: [],
-    15: [0, 2, 14],
-}
+def qx5():
+    register(config.APItoken, config.URL)
+    configuration = get_backend('ibmqx5').configuration
+    couplings = configuration['coupling_map']
+    coupling_map = dict()
+    for n in range(configuration['n_qubits']):
+        coupling_map.update({n: []})
+    for coupling in couplings:
+        coupling_map[coupling[0]].append(coupling[1])
+    return coupling_map
+
+
+def qx4():
+    register(config.APItoken, config.URL)
+    configuration = get_backend('ibmqx4').configuration
+    couplings = configuration['coupling_map']
+    coupling_map = dict()
+    for n in range(configuration['n_qubits']):
+        coupling_map.update({n: []})
+    for coupling in couplings:
+        coupling_map[coupling[0]].append(coupling[1])
+    return coupling_map
