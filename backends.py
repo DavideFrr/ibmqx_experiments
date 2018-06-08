@@ -29,6 +29,6 @@ qx4 = 'ibmqx4'
 
 qx5 = 'ibmqx5'
 
-online_sim = 'ibmqx_qasm_simulator'
+online_sim = 'ibmq_qasm_simulator'
 
 local_sim = 'local_qasm_simulator'
