@@ -331,9 +331,6 @@ def ghz_exec(execution, backend, utility, n_qubits, num_shots=1024, directory='D
     QASM_source = circuit.qasm()
     logger.debug(QASM_source)
 
-    from qiskit.tools.visualization import circuit_drawer
-    circuit_drawer(circuit)
-
     logger.debug('launch_exp() - QASM:\n%s', str(QASM_source))
 
     while True:
@@ -445,9 +442,6 @@ def envariance_exec(execution, backend, utility, n_qubits, num_shots=1024, direc
 
     QASM_source = circuit.qasm()
     logger.debug(QASM_source)
-
-    from qiskit.tools.visualization import circuit_drawer
-    circuit_drawer(circuit)
 
     logger.debug('launch_exp() - QASM:\n%s', str(QASM_source))
 
