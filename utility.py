@@ -643,7 +643,7 @@ def parity_exec(execution, backend, utility, n_qubits, oracle='11', num_shots=10
 
     if manual_mode is False:
         if oracle != '10':
-            for i in range(2, n_qubits-2, 1):
+            for i in range(2, n_qubits, 1):
                 oracle += oracle[i-1]
         else:
             one = True
