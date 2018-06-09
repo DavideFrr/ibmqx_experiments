@@ -22,7 +22,6 @@ __email__ = "davide.ferrari8@studenti.unipr.it"
 import logging
 import operator
 import os
-import sys
 import time
 from time import sleep
 
@@ -214,7 +213,8 @@ class Utility(object):
     def create(self, circuit, quantum_r, classical_r, n_qubits, x=True, oracle='11', manual_mode=False):
 
         if manual_mode is False and len(oracle) != 2:
-            logger.critical('Wrong oracle format for auto mode, set manual_mode=True to explicitly specify a custom oracle\n')
+            logger.critical(
+                'Wrong oracle format for auto mode, set manual_mode=True to explicitly specify a custom oracle\n')
             exit(5)
 
         self.__n_qubits = n_qubits
@@ -266,7 +266,8 @@ class Utility(object):
         self.__connected.clear()
         return connected
 
-    def set_size(self, backend, n_qubits):
+    @staticmethod
+    def set_size(backend, n_qubits):
         size = 0
         if backend == qx2 or backend == qx4:
             if n_qubits <= 5:
@@ -291,6 +292,7 @@ class Utility(object):
             logger.critical('launch_exp() - Unknown backend.')
             exit(3)
         return size
+
 
 def ghz_exec(execution, backend, utility, n_qubits, num_shots=1024, directory='Data_GHZ/'):
     os.makedirs(os.path.dirname(directory), exist_ok=True)
@@ -317,7 +319,7 @@ def ghz_exec(execution, backend, utility, n_qubits, num_shots=1024, directory='D
     connected = utility.ghz(circuit=circuit, quantum_r=quantum_r, classical_r=classical_r, n_qubits=n_qubits)
 
     QASM_source = circuit.qasm()
-    print(QASM_source)
+    logger.debug(QASM_source)
 
     from qiskit.tools.visualization import circuit_drawer
     circuit_drawer(circuit)
@@ -361,7 +363,7 @@ def ghz_exec(execution, backend, utility, n_qubits, num_shots=1024, directory='D
             logger.debug(job.status)
             time.sleep(interval)
             lapse += 1
-        print(job.status)
+        logger.debug(job.status)
         result = job.result()
     except Exception:
         sleep(900)
@@ -405,6 +407,7 @@ def ghz_exec(execution, backend, utility, n_qubits, num_shots=1024, directory='D
 
     out_f.close()
 
+
 # launch envariance experiment on the given backend
 def envariance_exec(execution, backend, utility, n_qubits, num_shots=1024, directory='Data_Envariance/'):
     os.makedirs(os.path.dirname(directory), exist_ok=True)
@@ -431,7 +434,7 @@ def envariance_exec(execution, backend, utility, n_qubits, num_shots=1024, direc
     connected = utility.envariance(circuit=circuit, quantum_r=quantum_r, classical_r=classical_r, n_qubits=n_qubits)
 
     QASM_source = circuit.qasm()
-    print(QASM_source)
+    logger.debug(QASM_source)
 
     from qiskit.tools.visualization import circuit_drawer
     circuit_drawer(circuit)
@@ -475,7 +478,7 @@ def envariance_exec(execution, backend, utility, n_qubits, num_shots=1024, direc
             logger.debug(job.status)
             time.sleep(interval)
             lapse += 1
-        print(job.status)
+        logger.debug(job.status)
         result = job.result()
     except Exception:
         sleep(900)
@@ -521,7 +524,8 @@ def envariance_exec(execution, backend, utility, n_qubits, num_shots=1024, direc
 
 
 # launch parity experiment on the given backend
-def parity_exec(execution, backend, utility, n_qubits, oracle='11', num_shots=1024, directory='Data_Parity/', manual_mode=False):
+def parity_exec(execution, backend, utility, n_qubits, oracle='11', num_shots=1024, directory='Data_Parity/',
+                manual_mode=False):
     os.makedirs(os.path.dirname(directory), exist_ok=True)
 
     size = utility.set_size(backend, n_qubits)
@@ -549,6 +553,7 @@ def parity_exec(execution, backend, utility, n_qubits, oracle='11', num_shots=10
                                oracle=oracle, manual_mode=manual_mode)
 
     QASM_source = circuit.qasm()
+    logger.debug(QASM_source)
 
     logger.debug('launch_exp() - QASM:\n%s', str(QASM_source))
 
@@ -590,7 +595,7 @@ def parity_exec(execution, backend, utility, n_qubits, oracle='11', num_shots=10
             logger.debug(job.status)
             time.sleep(interval)
             lapse += 1
-        print(job.status)
+        logger.debug(job.status)
         result = job.result()
     except Exception:
         sleep(900)

@@ -19,9 +19,6 @@ __license__ = "Apache"
 __version__ = "2.0"
 __email__ = "davide.ferrari8@studenti.unipr.it"
 
-import logging
-import myLogger
-
 from utility import *
 from backends import *
 import coupling_maps
