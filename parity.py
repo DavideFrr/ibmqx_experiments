@@ -63,7 +63,7 @@ oracles = [
 # launch_exp takes the argument device from devices module
 logger.info('Started')
 
-utility_qx5 = Utility(coupling_maps.qx5)
+utility_qx5 = Utility(coupling_maps.qx5())
 
 for execution in range(1, executions + 1, 1):
 

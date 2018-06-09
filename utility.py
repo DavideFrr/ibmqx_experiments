@@ -150,10 +150,10 @@ class Utility(object):
             exit(3)
 
     # place cnot gates based on the path created in create_path method
-    def place_cx(self, circuit, quantum_r, oracle='11'):
+    def place_cx(self, circuit, quantum_r, stop, oracle='11'):
         if not oracle == '00':
             logger.log(logging.VERBOSE, 'place_cx() - oracle != 00')
-            stop = self.__n_qubits // 2
+            # stop = self.__n_qubits // 2
             for qubit in self.__connected:
                 if self.__connected[qubit] != -1:
                     if oracle == '11':
@@ -212,10 +212,17 @@ class Utility(object):
     # create the circuit
     def create(self, circuit, quantum_r, classical_r, n_qubits, x=True, oracle='11', manual_mode=False):
 
+        stop = 0
         if manual_mode is False and len(oracle) != 2:
             logger.critical(
                 'Wrong oracle format for auto mode, set manual_mode=True to explicitly specify a custom oracle\n')
             exit(5)
+        elif manual_mode is False and len(oracle) == 2:
+            stop = self.__n_qubits // 2
+        elif manual_mode is True:
+            for i in oracle:
+                if i == '1':
+                    stop += 1
 
         self.__n_qubits = n_qubits
 
@@ -234,7 +241,10 @@ class Utility(object):
             count -= 1
         logger.debug('create() - connected:\n%s', str(self.__connected))
         self.place_h(circuit, self.__most_connected[0], quantum_r, x=x)
-        self.place_cx(circuit, quantum_r, oracle=oracle)
+        if manual_mode is False:
+            self.place_cx(circuit, quantum_r, stop, oracle=oracle)
+        else:
+            self.place_cx(circuit, quantum_r, stop, oracle='10')
         self.place_h(circuit, self.__most_connected[0], quantum_r, initial=False)
         if x is True:
             self.place_x(circuit, quantum_r)
@@ -630,21 +640,36 @@ def parity_exec(execution, backend, utility, n_qubits, oracle='11', num_shots=10
     # store counts in txt file
     out_f.write('VALUES\t\tCOUNTS\n\n')
     logger.debug('launch_exp() - oredred_q:\n%s', str(connected))
-    stop = n_qubits // 2
+
+    if manual_mode is False:
+        if oracle != '10':
+            for i in range(2, n_qubits-2, 1):
+                oracle += oracle[i-1]
+        else:
+            one = True
+            for i in range(n_qubits):
+                if one is True:
+                    one = False
+                    oracle += '1'
+                else:
+                    one = True
+                    oracle += '0'
+
     for i in sorted_c:
         reverse = i[0][::-1]
         logger.log(logging.VERBOSE, 'launch_exp() - reverse in for 1st loop: %s', str(reverse))
         sorted_v = [reverse[connected[0]]]
         logger.log(logging.VERBOSE, 'launch_exp() - connected[0] in 1st for loop: %s', str(connected[0]))
         logger.log(logging.VERBOSE, 'launch_exp() - sorted_v in 1st for loop: %s', str(sorted_v))
-        for n in range(stop):
-            sorted_v.append(reverse[connected[n + 1]])
-            logger.log(logging.VERBOSE, 'launch_exp() - connected[n+1], sorted_v[n+1] in 2nd for loop: %s,%s',
-                       str(connected[n + 1]), str(sorted_v[n + 1]))
-            if (n + stop + 1) != n_qubits:
-                sorted_v.append(reverse[connected[n + stop + 1]])
-                logger.log(logging.VERBOSE, 'launch_exp() - connected[n+stop+1], sorted_v[n+2] in 2nd for loop: %s%s',
-                           str(connected[n + stop + 1]), str(sorted_v[n + 2]))
+        one = 1
+        zero = n_qubits-1
+        for q in oracle:
+            if q == '1':
+                sorted_v.append(reverse[connected[one]])
+                one += 1
+            else:
+                sorted_v.append(reverse[connected[zero]])
+                zero -= 1
         value = ''.join(str(v) for v in sorted_v)
         results.update({value: i[1]})
         out_f.write(value + '\t' + str(i[1]) + '\n')
