@@ -210,16 +210,16 @@ class Utility(object):
         # circuit.measure(quantum_r, classical_r)
 
     # create the circuit
-    def create(self, circuit, quantum_r, classical_r, n_qubits, x=True, oracle='11', manual_mode=False):
+    def create(self, circuit, quantum_r, classical_r, n_qubits, x=True, oracle='11', custom_mode=False):
 
         stop = 0
-        if manual_mode is False and len(oracle) != 2:
+        if custom_mode is False and len(oracle) != 2:
             logger.critical(
-                'Wrong oracle format for auto mode, set manual_mode=True to explicitly specify a custom oracle\n')
+                'Wrong oracle format for auto mode, set custom_mode=True to explicitly specify a custom oracle\n')
             exit(5)
-        elif manual_mode is False and len(oracle) == 2:
+        elif custom_mode is False and len(oracle) == 2:
             stop = self.__n_qubits // 2
-        elif manual_mode is True:
+        elif custom_mode is True:
             for i in oracle:
                 if i == '1':
                     stop += 1
@@ -241,7 +241,7 @@ class Utility(object):
             count -= 1
         logger.debug('create() - connected:\n%s', str(self.__connected))
         self.place_h(circuit, self.__most_connected[0], quantum_r, x=x)
-        if manual_mode is False:
+        if custom_mode is False:
             self.place_cx(circuit, quantum_r, stop, oracle=oracle)
         else:
             self.place_cx(circuit, quantum_r, stop, oracle='10')
@@ -268,8 +268,8 @@ class Utility(object):
         self.__connected.clear()
         return connected
 
-    def parity(self, circuit, quantum_r, classical_r, n_qubits, oracle='11', manual_mode=False):
-        self.create(circuit, quantum_r, classical_r, n_qubits, x=False, oracle=oracle, manual_mode=manual_mode)
+    def parity(self, circuit, quantum_r, classical_r, n_qubits, oracle='11', custom_mode=False):
+        self.create(circuit, quantum_r, classical_r, n_qubits, x=False, oracle=oracle, custom_mode=custom_mode)
         connected = list(self.__connected.keys())
         logger.debug('parity() - connected:\n%s', str(connected))
         self.__n_qubits = 0
@@ -529,7 +529,7 @@ def envariance_exec(execution, backend, utility, n_qubits, num_shots=1024, direc
 
 # launch parity experiment on the given backend
 def parity_exec(execution, backend, utility, n_qubits, oracle='11', num_shots=1024, directory='Data_Parity/',
-                manual_mode=False):
+                custom_mode=False):
     os.makedirs(os.path.dirname(directory), exist_ok=True)
 
     size = utility.set_size(backend, n_qubits)
@@ -554,7 +554,7 @@ def parity_exec(execution, backend, utility, n_qubits, oracle='11', num_shots=10
     circuit = QuantumCircuit(quantum_r, classical_r, name="parity")
 
     connected = utility.parity(circuit=circuit, quantum_r=quantum_r, classical_r=classical_r, n_qubits=n_qubits,
-                               oracle=oracle, manual_mode=manual_mode)
+                               oracle=oracle, custom_mode=custom_mode)
 
     QASM_source = circuit.qasm()
     logger.debug(QASM_source)
@@ -635,7 +635,7 @@ def parity_exec(execution, backend, utility, n_qubits, oracle='11', num_shots=10
     out_f.write('VALUES\t\tCOUNTS\n\n')
     logger.debug('launch_exp() - oredred_q:\n%s', str(connected))
 
-    if manual_mode is False:
+    if custom_mode is False:
         if oracle != '10':
             for i in range(2, n_qubits, 1):
                 oracle += oracle[i-1]
