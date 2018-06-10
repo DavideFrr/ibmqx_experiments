@@ -218,8 +218,10 @@ class Utility(object):
                 'Wrong oracle format for auto mode, set custom_mode=True to explicitly specify a custom oracle\n')
             exit(5)
         elif custom_mode is False and len(oracle) == 2:
-            stop = self.__n_qubits // 2
-        elif custom_mode is True:
+            logger.debug('Custom mode False')
+            stop = n_qubits // 2
+        else:
+            logger.debug('Custom mode True')
             for i in oracle:
                 if i == '1':
                     stop += 1
@@ -637,11 +639,12 @@ def parity_exec(execution, backend, utility, n_qubits, oracle='11', num_shots=10
 
     if custom_mode is False:
         if oracle != '10':
-            for i in range(2, n_qubits, 1):
-                oracle += oracle[i-1]
+            for i in range(2, n_qubits-1, 1):
+                oracle += oracle[i - 1]
         else:
+            oracle = ''
             one = True
-            for i in range(n_qubits):
+            for i in range(n_qubits-1):
                 if one is True:
                     one = False
                     oracle += '1'
@@ -656,7 +659,7 @@ def parity_exec(execution, backend, utility, n_qubits, oracle='11', num_shots=10
         logger.log(logging.VERBOSE, 'launch_exp() - connected[0] in 1st for loop: %s', str(connected[0]))
         logger.log(logging.VERBOSE, 'launch_exp() - sorted_v in 1st for loop: %s', str(sorted_v))
         one = 1
-        zero = n_qubits-1
+        zero = n_qubits - 1
         for q in oracle:
             if q == '1':
                 sorted_v.append(reverse[connected[one]])
