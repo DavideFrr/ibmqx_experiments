@@ -411,6 +411,18 @@ class Utility(object):
         logger.debug('parity() - connected:\n%s', str(cobj['connected']))
         return cobj
 
+    @staticmethod
+    def exec_data(cobj, robj):
+        eobj = {
+            'circuit': robj['circuit'],
+            'connected': cobj['connected'],
+            'qasm': cobj['qasm'],
+            'ran_qasm': robj['ran_qasm'],
+            'result': robj['result'],
+            'counts': robj['counts'],
+        }
+        return eobj
+
 
 def ghz_exec(execution, backend, utility, n_qubits, num_shots=1024, directory='Data_GHZ/'):
     os.makedirs(os.path.dirname(directory), exist_ok=True)
@@ -444,15 +456,8 @@ def ghz_exec(execution, backend, utility, n_qubits, num_shots=1024, directory='D
         out_f.write(value + '\t' + str(i[1]) + '\n')
 
     out_f.close()
-    eobj = {
-        'circuit': robj['circuit'],
-        'connected': cobj['connected'],
-        'qasm': cobj['qasm'],
-        'ran_qasm': robj['ran_qasm'],
-        'result': robj['result'],
-        'counts': robj['counts'],
-    }
-    return eobj
+
+    return utility.exec_data(cobj, robj)
 
 
 # launch envariance experiment on the given backend
@@ -488,15 +493,8 @@ def envariance_exec(execution, backend, utility, n_qubits, num_shots=1024, direc
         out_f.write(value + '\t' + str(i[1]) + '\n')
 
     out_f.close()
-    eobj = {
-        'circuit': robj['circuit'],
-        'connected': cobj['connected'],
-        'qasm': cobj['qasm'],
-        'ran_qasm': robj['ran_qasm'],
-        'result': robj['result'],
-        'counts': robj['counts'],
-    }
-    return eobj
+
+    return utility.exec_data(cobj, robj)
 
 
 # launch parity experiment on the given backend
@@ -557,12 +555,5 @@ def parity_exec(execution, backend, utility, n_qubits, oracle='11', num_shots=10
         out_f.write(value + '\t' + str(i[1]) + '\n')
 
     out_f.close()
-    eobj = {
-        'circuit': robj['circuit'],
-        'connected': cobj['connected'],
-        'qasm': cobj['qasm'],
-        'ran_qasm': robj['ran_qasm'],
-        'result': robj['result'],
-        'counts': robj['counts'],
-    }
-    return eobj
+
+    return utility.exec_data(cobj, robj)
