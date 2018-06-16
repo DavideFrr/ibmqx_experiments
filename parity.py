@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # =============================================================================
+from qiskit.tools.visualization import latex_drawer
 
 __author__ = "Davide Ferrari"
 __copyright__ = "Copyright 2017, Quantum Information Science, University of Parma, Italy"
@@ -29,11 +30,11 @@ logger.setLevel(logging.INFO)
 logger.propagate = False
 
 
-# device is the device you want to run the experiment on
+# backend is the backend you want to run the experiment on
 # executions is the number of different experiment you want to run
 # n_shots is the maximum number of n_shots
 # oracles are the strings you want to learn: '10' for '10...10', '11' for '11...11', '00' for '00...00'
-device = qx5
+backend = qx5
 
 executions = 200
 
@@ -60,7 +61,7 @@ oracles = [
     '11',
 ]
 
-# launch_exp takes the argument device from devices module
+# launch_exp takes the argument backend from backends module
 logger.info('Started')
 
 utility_qx5 = Utility(coupling_maps.qx5())
@@ -72,12 +73,11 @@ for execution in range(1, executions + 1, 1):
         # Comment the experiments you don't want to run
         for n_queries in queries:
             logger.info('Qubits %d - Oracle %s - Execution %d - Queries %d', 3, oracle, execution, n_queries)
-            parity_exec(execution, device, utility_qx5, n_qubits=3, oracle=oracle, num_shots=n_queries)
+            parity_exec(execution, backend, utility_qx5, n_qubits=3, oracle=oracle, num_shots=n_queries)
             logger.info('Qubits %d - Oracle %s - Execution %d - Queries %d', 9, oracle, execution, n_queries)
-            parity_exec(execution, device, utility_qx5, n_qubits=9, oracle=oracle, num_shots=n_queries)
+            parity_exec(execution, backend, utility_qx5, n_qubits=9, oracle=oracle, num_shots=n_queries)
             logger.info('Qubits %d - Oracle %s - Execution %d - Queries %d', 16, oracle, execution, n_queries)
-            parity_exec(execution, device, utility_qx5, n_qubits=16, oracle=oracle, num_shots=n_queries)
-
+            parity_exec(execution, backend, utility_qx5, n_qubits=16, oracle=oracle, num_shots=n_queries)
 utility_qx5.close()
 
 logger.info('All done.')

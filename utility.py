@@ -28,7 +28,7 @@ from time import sleep
 import myLogger
 from backends import *
 
-from qiskit import register, get_backend, execute, QuantumRegister, ClassicalRegister, QuantumCircuit
+from qiskit import register, get_backend, execute, QuantumRegister, ClassicalRegister, QuantumCircuit, compile
 from IBMQuantumExperience import IBMQuantumExperience
 import config
 
@@ -139,6 +139,7 @@ class Utility(object):
             logger.log(logging.VERBOSE, 'cx() - cnot: (%s, %s)', str(control), str(target))
             circuit.cx(control_qubit, target_qubit)
         elif control in self.__coupling_map[target]:
+            circuit.barrier()
             logger.log(logging.VERBOSE, 'cx() - inverse-cnot: (%s, %s)', str(control), str(target))
             circuit.h(control_qubit)
             circuit.h(target_qubit)
@@ -235,6 +236,7 @@ class Utility(object):
             logger.critical('create() - Can use only up to %s qubits', str(max_qubits))
             exit(2)
 
+        self.__connected.clear()
         count = self.__n_qubits
         for qubit in self.__path:
             if count <= 0:
@@ -243,40 +245,21 @@ class Utility(object):
             count -= 1
         logger.debug('create() - connected:\n%s', str(self.__connected))
         self.place_h(circuit, self.__most_connected[0], quantum_r, x=x)
+        circuit.barrier()
         if custom_mode is False:
             self.place_cx(circuit, quantum_r, stop, oracle=oracle)
         else:
             self.place_cx(circuit, quantum_r, stop, oracle='10')
+        circuit.barrier()
         self.place_h(circuit, self.__most_connected[0], quantum_r, initial=False)
         if x is True:
             self.place_x(circuit, quantum_r)
         self.measure(circuit, quantum_r, classical_r)
-
-    def ghz(self, circuit, quantum_r, classical_r, n_qubits):
-        self.create(circuit, quantum_r, classical_r, n_qubits, x=False)
-        sorted_c = sorted(self.__connected.items(), key=operator.itemgetter(0))
-        connected = list(zip(*sorted_c))[0]
-        logger.debug('envariance() - connected:\n%s', str(connected))
-        self.__n_qubits = 0
-        self.__connected.clear()
-        return connected
-
-    def envariance(self, circuit, quantum_r, classical_r, n_qubits):
-        self.create(circuit, quantum_r, classical_r, n_qubits)
-        sorted_c = sorted(self.__connected.items(), key=operator.itemgetter(0))
-        connected = list(zip(*sorted_c))[0]
-        logger.debug('envariance() - connected:\n%s', str(connected))
-        self.__n_qubits = 0
-        self.__connected.clear()
-        return connected
-
-    def parity(self, circuit, quantum_r, classical_r, n_qubits, oracle='11', custom_mode=False):
-        self.create(circuit, quantum_r, classical_r, n_qubits, x=False, oracle=oracle, custom_mode=custom_mode)
-        connected = list(self.__connected.keys())
-        logger.debug('parity() - connected:\n%s', str(connected))
-        self.__n_qubits = 0
-        self.__connected.clear()
-        return connected
+        cobj = {
+            'circuit': circuit,
+            'connected': self.__connected.copy()
+        }
+        return cobj
 
     @staticmethod
     def set_size(backend, n_qubits):
@@ -284,14 +267,12 @@ class Utility(object):
         if backend == qx2 or backend == qx4:
             if n_qubits <= 5:
                 size = 5
-                # backend = 'ibmqx_qasm_simulator'
             else:
                 logger.critical('launch_exp() - Too much qubits for %s !', backend)
                 exit(1)
         elif backend == qx3 or backend == qx5:
             if n_qubits <= 16:
                 size = 16
-                # backend = 'ibmqx_qasm_simulator'
             else:
                 logger.critical('launch_exp() - Too much qubits for %s !', backend)
                 exit(2)
@@ -305,93 +286,138 @@ class Utility(object):
             exit(3)
         return size
 
+    @staticmethod
+    def sort_connected(connected, algo='ghz'):
+        if algo == 'parity':
+            return list(connected.keys())
+        else:
+            return list(zip(*sorted(connected.items(), key=operator.itemgetter(0))))[0]
+
+    def compile(self, n_qubits, backend=local_sim, algo='ghz', oracle='11', custom_mode=False, compiling=True):
+        size = self.set_size(backend, n_qubits)
+        quantum_r = QuantumRegister(size, "qr")
+
+        classical_r = ClassicalRegister(size, "cr")
+
+        circuit = QuantumCircuit(quantum_r, classical_r, name=algo)
+
+        cobj = dict()
+
+        if algo == 'ghz':
+            cobj = self.create(circuit, quantum_r, classical_r, n_qubits, x=False)
+        elif algo == 'envariance':
+            cobj = self.create(circuit, quantum_r, classical_r, n_qubits)
+        elif algo == 'parity':
+            cobj = self.create(circuit, quantum_r, classical_r, n_qubits, x=False, oracle=oracle,
+                               custom_mode=custom_mode)
+        else:
+            logger.critical('compile() - Incorrect circuit algo: %s', algo)
+            exit(6)
+        logger.debug('parity() - connected:\n%s', str(self.__connected))
+        QASM_source = circuit.qasm()
+        logger.debug('launch_exp() - QASM:\n%s', str(QASM_source))
+        connected = self.sort_connected(cobj['connected'], algo=algo)
+        cobj['connected'] = connected
+        cobj['qasm'] = QASM_source
+        if compiling is True:
+            cobj['compiled'] = compile(circuit, backend)['circuits'][0]
+        return cobj
+
+    def run(self, circuit, backend=local_sim, shots=1024, max_credits=5):
+        try:
+            register(config.APItoken, config.URL)  # set the APIToken and API url
+        except ConnectionError:
+            sleep(900)
+            logger.critical('run() - API Exception occurred, retrying\n')
+            return self.run(circuit, backend, shots, max_credits)
+
+        logger.debug('run() - QASM:\n%s', str(circuit.qasm()))
+
+        while True:
+            try:
+                backend_status = get_backend(backend).status
+                if ('available' in backend_status and backend_status['available'] is False) \
+                        or ('busy' in backend_status and backend_status['busy'] is True):
+                    logger.critical('run() - %s currently offline, waiting...', backend)
+                    while get_backend(backend).status['available'] is False:
+                        sleep(1800)
+                    logger.critical('run() - %s is back online, resuming execution', backend)
+            except ConnectionError:
+                logger.critical('run() - Error getting backend status, retrying...')
+                sleep(900)
+                continue
+            except ValueError:
+                logger.critical('run() - Backend is not available, waiting...')
+                sleep(900)
+                continue
+            break
+
+        api = IBMQuantumExperience(config.APItoken)
+
+        if api.get_my_credits()['remaining'] < 3:
+            logger.critical('run() - Waiting for credits to replenish...')
+            while api.get_my_credits()['remaining'] < 3:
+                sleep(900)
+            logger.critical('run() - Credits replenished, resuming execution')
+
+        try:
+            job = execute(circuit, backend=backend, shots=shots, max_credits=max_credits)
+            lapse = 0
+            interval = 10
+            while not job.done:
+                logger.debug('run() - Status @ {} seconds'.format(interval * lapse))
+                logger.debug(job.status)
+                time.sleep(interval)
+                lapse += 1
+            logger.debug(job.status)
+            result = job.result()
+        except Exception:
+            sleep(900)
+            logger.critical('run() - Exception occurred, retrying\n')
+            return self.run(circuit, backend, shots, max_credits)
+
+        try:
+            counts = result.get_counts(circuit)
+        except Exception:
+            logger.critical('run() - Exception occurred, retrying\n')
+            return self.run(circuit, backend, shots, max_credits)
+
+        logger.debug('run() - counts:\n%s', str(counts))
+
+        sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
+
+        robj = {
+            'circuit': circuit,
+            'result': result,
+            'counts': sorted_c,
+            'ran_qasm': result.get_ran_qasm(result.get_names()[0])
+        }
+
+        return robj
+
+    def ghz(self, n_qubits, backend=local_sim, compiling=True):
+        cobj = self.compile(n_qubits, backend=backend, compiling=compiling)
+        logger.debug('ghz() - connected:\n%s', str(cobj['connected']))
+        return cobj
+
+    def envariance(self, n_qubits, backend=local_sim, compiling=True):
+        cobj = self.compile(n_qubits, backend=backend, algo='envariance', compiling=compiling)
+        logger.debug('envariance() - connected:\n%s', str(cobj['connected']))
+        return cobj
+
+    def parity(self, n_qubits, backend=local_sim, oracle='11', custom_mode=False, compiling=True):
+        cobj = self.compile(n_qubits, backend=backend, algo='parity', oracle=oracle, custom_mode=custom_mode,
+                            compiling=compiling)
+        logger.debug('parity() - connected:\n%s', str(cobj['connected']))
+        return cobj
+
 
 def ghz_exec(execution, backend, utility, n_qubits, num_shots=1024, directory='Data_GHZ/'):
     os.makedirs(os.path.dirname(directory), exist_ok=True)
 
-    size = utility.set_size(backend, n_qubits)
+    cobj = utility.ghz(n_qubits, backend=backend, compiling=False)
 
-    results = dict()
-
-    try:
-        register(config.APItoken, config.URL)  # set the APIToken and API url
-    except ConnectionError:
-        sleep(900)
-        logger.critical('API Exception occurred, retrying\nQubits %d - Execution %d - Shots %d', n_qubits, execution,
-                        num_shots)
-        envariance_exec(execution, backend, utility, n_qubits=n_qubits, num_shots=num_shots, directory=directory)
-        return
-
-    quantum_r = QuantumRegister(size, "qr")
-
-    classical_r = ClassicalRegister(size, "cr")
-
-    circuit = QuantumCircuit(quantum_r, classical_r, name="ghz")
-
-    connected = utility.ghz(circuit=circuit, quantum_r=quantum_r, classical_r=classical_r, n_qubits=n_qubits)
-
-    QASM_source = circuit.qasm()
-    logger.debug(QASM_source)
-
-    logger.debug('launch_exp() - QASM:\n%s', str(QASM_source))
-
-    while True:
-        try:
-            backend_status = get_backend(backend).status
-            if ('available' in backend_status and backend_status['available'] is False) \
-                    or ('busy' in backend_status and backend_status['busy'] is True):
-                logger.critical('%s currently offline, waiting...', backend)
-                while get_backend(backend).status['available'] is False:
-                    sleep(1800)
-                logger.critical('%s is back online, resuming execution', backend)
-        except ConnectionError:
-            logger.critical('Error getting backend status, retrying...')
-            sleep(900)
-            continue
-        except ValueError:
-            logger.critical('Backend is not available, waiting...')
-            sleep(900)
-            continue
-        break
-
-    api = IBMQuantumExperience(config.APItoken)
-
-    if api.get_my_credits()['remaining'] < 3:
-        logger.critical('Qubits %d - Execution %d - Shots %d ---- Waiting for credits to replenish...',
-                        n_qubits, execution, num_shots)
-        while api.get_my_credits()['remaining'] < 3:
-            sleep(900)
-        logger.critical('Credits replenished, resuming execution')
-
-    try:
-        job = execute(circuit, backend=backend, shots=num_shots, max_credits=5)
-        lapse = 0
-        interval = 10
-        while not job.done:
-            logger.debug('Status @ {} seconds'.format(interval * lapse))
-            logger.debug(job.status)
-            time.sleep(interval)
-            lapse += 1
-        logger.debug(job.status)
-        result = job.result()
-    except Exception:
-        sleep(900)
-        logger.critical('Exception occurred, retrying\nQubits %d - Execution %d - Shots %d', n_qubits, execution,
-                        num_shots)
-        envariance_exec(execution, backend, utility, n_qubits=n_qubits, num_shots=num_shots, directory=directory)
-        return
-
-    try:
-        counts = result.get_counts(circuit)
-    except Exception:
-        logger.critical('Exception occurred, retrying\nQubits %d - Execution %d - Shots %d', n_qubits, execution,
-                        num_shots)
-        envariance_exec(execution, backend, utility, n_qubits=n_qubits, num_shots=num_shots, directory=directory)
-        return
-
-    logger.debug('launch_exp() - counts:\n%s', str(counts))
-
-    sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
+    robj = utility.run(cobj['circuit'], backend=backend, shots=num_shots)
 
     filename = directory + backend + '/' + 'execution' + str(
         execution) + '/' + backend + '_' + str(num_shots) + '_' + str(
@@ -403,6 +429,9 @@ def ghz_exec(execution, backend, utility, n_qubits, num_shots=1024, directory='D
     out_f.write('VALUES\t\tCOUNTS\n\n')
 
     stop = n_qubits // 2
+    results = dict()
+    sorted_c = robj['counts']
+    connected = cobj['connected']
     for i in sorted_c:
         reverse = i[0][::-1]
         sorted_v = []
@@ -415,95 +444,24 @@ def ghz_exec(execution, backend, utility, n_qubits, num_shots=1024, directory='D
         out_f.write(value + '\t' + str(i[1]) + '\n')
 
     out_f.close()
+    eobj = {
+        'circuit': robj['circuit'],
+        'connected': cobj['connected'],
+        'qasm': cobj['qasm'],
+        'ran_qasm': robj['ran_qasm'],
+        'result': robj['result'],
+        'counts': robj['counts'],
+    }
+    return eobj
 
 
 # launch envariance experiment on the given backend
 def envariance_exec(execution, backend, utility, n_qubits, num_shots=1024, directory='Data_Envariance/'):
     os.makedirs(os.path.dirname(directory), exist_ok=True)
 
-    size = utility.set_size(backend, n_qubits)
+    cobj = utility.envariance(n_qubits, backend=backend, compiling=False)
 
-    results = dict()
-
-    try:
-        register(config.APItoken, config.URL)  # set the APIToken and API url
-    except ConnectionError:
-        sleep(900)
-        logger.critical('API Exception occurred, retrying\nQubits %d - Execution %d - Shots %d', n_qubits, execution,
-                        num_shots)
-        envariance_exec(execution, backend, utility, n_qubits=n_qubits, num_shots=num_shots, directory=directory)
-        return
-
-    quantum_r = QuantumRegister(size, "qr")
-
-    classical_r = ClassicalRegister(size, "cr")
-
-    circuit = QuantumCircuit(quantum_r, classical_r, name="envariance")
-
-    connected = utility.envariance(circuit=circuit, quantum_r=quantum_r, classical_r=classical_r, n_qubits=n_qubits)
-
-    QASM_source = circuit.qasm()
-    logger.debug(QASM_source)
-
-    logger.debug('launch_exp() - QASM:\n%s', str(QASM_source))
-
-    while True:
-        try:
-            backend_status = get_backend(backend).status
-            if ('available' in backend_status and backend_status['available'] is False) \
-                    or ('busy' in backend_status and backend_status['busy'] is True):
-                logger.critical('%s currently offline, waiting...', backend)
-                while get_backend(backend).status['available'] is False:
-                    sleep(1800)
-                logger.critical('%s is back online, resuming execution', backend)
-        except ConnectionError:
-            logger.critical('Error getting backend status, retrying...')
-            sleep(900)
-            continue
-        except ValueError:
-            logger.critical('Backend is not available, waiting...')
-            sleep(900)
-            continue
-        break
-
-    api = IBMQuantumExperience(config.APItoken)
-
-    if api.get_my_credits()['remaining'] < 3:
-        logger.critical('Qubits %d - Execution %d - Shots %d ---- Waiting for credits to replenish...',
-                        n_qubits, execution, num_shots)
-        while api.get_my_credits()['remaining'] < 3:
-            sleep(900)
-        logger.critical('Credits replenished, resuming execution')
-
-    try:
-        job = execute(circuit, backend=backend, shots=num_shots, max_credits=5)
-        lapse = 0
-        interval = 10
-        while not job.done:
-            logger.debug('Status @ {} seconds'.format(interval * lapse))
-            logger.debug(job.status)
-            time.sleep(interval)
-            lapse += 1
-        logger.debug(job.status)
-        result = job.result()
-    except Exception:
-        sleep(900)
-        logger.critical('Exception occurred, retrying\nQubits %d - Execution %d - Shots %d', n_qubits, execution,
-                        num_shots)
-        envariance_exec(execution, backend, utility, n_qubits=n_qubits, num_shots=num_shots, directory=directory)
-        return
-
-    try:
-        counts = result.get_counts(circuit)
-    except Exception:
-        logger.critical('Exception occurred, retrying\nQubits %d - Execution %d - Shots %d', n_qubits, execution,
-                        num_shots)
-        envariance_exec(execution, backend, utility, n_qubits=n_qubits, num_shots=num_shots, directory=directory)
-        return
-
-    logger.debug('launch_exp() - counts:\n%s', str(counts))
-
-    sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
+    robj = utility.run(cobj['circuit'], backend=backend, shots=num_shots)
 
     filename = directory + backend + '/' + 'execution' + str(
         execution) + '/' + backend + '_' + str(num_shots) + '_' + str(
@@ -515,6 +473,9 @@ def envariance_exec(execution, backend, utility, n_qubits, num_shots=1024, direc
     out_f.write('VALUES\t\tCOUNTS\n\n')
 
     stop = n_qubits // 2
+    results = dict()
+    sorted_c = robj['counts']
+    connected = cobj['connected']
     for i in sorted_c:
         reverse = i[0][::-1]
         sorted_v = []
@@ -527,6 +488,15 @@ def envariance_exec(execution, backend, utility, n_qubits, num_shots=1024, direc
         out_f.write(value + '\t' + str(i[1]) + '\n')
 
     out_f.close()
+    eobj = {
+        'circuit': robj['circuit'],
+        'connected': cobj['connected'],
+        'qasm': cobj['qasm'],
+        'ran_qasm': robj['ran_qasm'],
+        'result': robj['result'],
+        'counts': robj['counts'],
+    }
+    return eobj
 
 
 # launch parity experiment on the given backend
@@ -534,97 +504,9 @@ def parity_exec(execution, backend, utility, n_qubits, oracle='11', num_shots=10
                 custom_mode=False):
     os.makedirs(os.path.dirname(directory), exist_ok=True)
 
-    size = utility.set_size(backend, n_qubits)
+    cobj = utility.parity(n_qubits, backend=backend, oracle=oracle, custom_mode=custom_mode, compiling=False)
 
-    results = dict()
-
-    try:
-        register(config.APItoken, config.URL)  # set the APIToken and API url
-    except ConnectionError:
-        sleep(900)
-        logger.critical('API Exception occurred, retrying\nQubits %d - Oracle %s - Execution %d - Queries %d', n_qubits,
-                        oracle,
-                        execution, num_shots)
-        parity_exec(execution, backend, utility, n_qubits=n_qubits, oracle=oracle, num_shots=num_shots,
-                    directory=directory)
-        return
-
-    quantum_r = QuantumRegister(size, "qr")
-
-    classical_r = ClassicalRegister(size, "cr")
-
-    circuit = QuantumCircuit(quantum_r, classical_r, name="parity")
-
-    connected = utility.parity(circuit=circuit, quantum_r=quantum_r, classical_r=classical_r, n_qubits=n_qubits,
-                               oracle=oracle, custom_mode=custom_mode)
-
-    QASM_source = circuit.qasm()
-    logger.debug(QASM_source)
-
-    logger.debug('launch_exp() - QASM:\n%s', str(QASM_source))
-
-    while True:
-        try:
-            backend_status = get_backend(backend).status
-            if ('available' in backend_status and backend_status['available'] is False) \
-                    or ('busy' in backend_status and backend_status['busy'] is True):
-                logger.critical('%s currently offline, waiting...', backend)
-                while get_backend(backend).status['available'] is False:
-                    sleep(1800)
-                logger.critical('%s is back online, resuming execution', backend)
-        except ConnectionError:
-            logger.critical('Error getting backend status, retrying...')
-            sleep(900)
-            continue
-        except ValueError:
-            logger.critical('Backend is not available, waiting...')
-            sleep(900)
-            continue
-        break
-
-    api = IBMQuantumExperience(config.APItoken)
-
-    if api.get_my_credits()['remaining'] < 3:
-        logger.critical('Qubits %d - Oracle %s - Execution %d - Queries %d ---- Waiting for credits to replenish...',
-                        n_qubits, oracle,
-                        execution, num_shots)
-        while api.get_my_credits()['remaining'] < 3:
-            sleep(900)
-        logger.critical('Credits replenished, resuming execution')
-
-    try:
-        job = execute(circuit, backend=backend, shots=num_shots, max_credits=5)
-        lapse = 0
-        interval = 10
-        while not job.done:
-            logger.debug('Status @ {} seconds'.format(interval * lapse))
-            logger.debug(job.status)
-            time.sleep(interval)
-            lapse += 1
-        logger.debug(job.status)
-        result = job.result()
-    except Exception:
-        sleep(900)
-        logger.critical('Exception occurred, retrying\nQubits %d - Oracle %s - Execution %d - Queries %d', n_qubits,
-                        oracle,
-                        execution, num_shots)
-        parity_exec(execution, backend, utility, n_qubits=n_qubits, oracle=oracle, num_shots=num_shots,
-                    directory=directory)
-        return
-
-    try:
-        counts = result.get_counts(circuit)
-    except Exception:
-        logger.critical('Exception occurred, retrying\nQubits %d - Oracle %s - Execution %d - Queries %d', n_qubits,
-                        oracle,
-                        execution, num_shots)
-        parity_exec(execution, backend, utility, n_qubits=n_qubits, oracle=oracle, num_shots=num_shots,
-                    directory=directory)
-        return
-
-    logger.debug('launch_exp() - counts:\n%s', str(counts))
-
-    sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
+    robj = utility.run(cobj['circuit'], backend=backend, shots=num_shots)
 
     filename = directory + backend + '/' + oracle + '/' + 'execution' + str(
         execution) + '/' + backend + '_' + str(
@@ -635,16 +517,16 @@ def parity_exec(execution, backend, utility, n_qubits, oracle='11', num_shots=10
 
     # store counts in txt file
     out_f.write('VALUES\t\tCOUNTS\n\n')
-    logger.debug('launch_exp() - oredred_q:\n%s', str(connected))
+    logger.debug('launch_exp() - oredred_q:\n%s', str(cobj['connected']))
 
     if custom_mode is False:
         if oracle != '10':
-            for i in range(2, n_qubits-1, 1):
+            for i in range(2, n_qubits - 1, 1):
                 oracle += oracle[i - 1]
         else:
             oracle = ''
             one = True
-            for i in range(n_qubits-1):
+            for i in range(n_qubits - 1):
                 if one is True:
                     one = False
                     oracle += '1'
@@ -652,6 +534,9 @@ def parity_exec(execution, backend, utility, n_qubits, oracle='11', num_shots=10
                     one = True
                     oracle += '0'
 
+    results = dict()
+    sorted_c = robj['counts']
+    connected = cobj['connected']
     for i in sorted_c:
         reverse = i[0][::-1]
         logger.log(logging.VERBOSE, 'launch_exp() - reverse in for 1st loop: %s', str(reverse))
@@ -672,3 +557,12 @@ def parity_exec(execution, backend, utility, n_qubits, oracle='11', num_shots=10
         out_f.write(value + '\t' + str(i[1]) + '\n')
 
     out_f.close()
+    eobj = {
+        'circuit': robj['circuit'],
+        'connected': cobj['connected'],
+        'qasm': cobj['qasm'],
+        'ran_qasm': robj['ran_qasm'],
+        'result': robj['result'],
+        'counts': robj['counts'],
+    }
+    return eobj

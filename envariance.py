@@ -36,7 +36,7 @@ shots = [
     8192
 ]
 
-# launch_exp takes the argument device from devices module
+# launch_exp takes the argument backend from backends module
 logger.info('Started')
 
 utility_qx4 = Utility(coupling_maps.qx4())
