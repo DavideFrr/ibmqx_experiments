@@ -28,7 +28,7 @@ from time import sleep
 import myLogger
 from backends import *
 
-from qiskit import register, get_backend, execute, QuantumRegister, ClassicalRegister, QuantumCircuit, compile
+from qiskit import register, get_backend, execute, QuantumRegister, ClassicalRegister, QuantumCircuit, compile, QISKitError
 from IBMQuantumExperience import IBMQuantumExperience
 import config
 
@@ -154,7 +154,6 @@ class Utility(object):
     def place_cx(self, circuit, quantum_r, stop, oracle='11'):
         if not oracle == '00':
             logger.log(logging.VERBOSE, 'place_cx() - oracle != 00')
-            # stop = self.__n_qubits // 2
             for qubit in self.__connected:
                 if self.__connected[qubit] != -1:
                     if oracle == '11':
@@ -208,7 +207,6 @@ class Utility(object):
         circuit.barrier()
         for qubit in self.__connected:
             circuit.measure(quantum_r[qubit], classical_r[qubit])
-        # circuit.measure(quantum_r, classical_r)
 
     # create the circuit
     def create(self, circuit, quantum_r, classical_r, n_qubits, x=True, oracle='11', custom_mode=False):
@@ -261,8 +259,7 @@ class Utility(object):
         }
         return cobj
 
-    @staticmethod
-    def set_size(backend, n_qubits):
+    def set_size(self, backend, n_qubits):
         size = 0
         if backend == qx2 or backend == qx4:
             if n_qubits <= 5:
@@ -276,11 +273,8 @@ class Utility(object):
             else:
                 logger.critical('launch_exp() - Too much qubits for %s !', backend)
                 exit(2)
-        elif backend == online_sim:
-            if n_qubits <= 5:
-                size = 5
-            elif n_qubits <= 16:
-                size = 16
+        elif backend == online_sim or backend == local_sim:
+            size = len(self.__coupling_map)
         else:
             logger.critical('launch_exp() - Unknown backend.')
             exit(3)
@@ -354,11 +348,9 @@ class Utility(object):
 
         api = IBMQuantumExperience(config.APItoken)
 
-        if api.get_my_credits()['remaining'] < 3:
+        while api.get_my_credits()['remaining'] < 5:
             logger.critical('run() - Waiting for credits to replenish...')
-            while api.get_my_credits()['remaining'] < 3:
-                sleep(900)
-            logger.critical('run() - Credits replenished, resuming execution')
+            sleep(900)
 
         try:
             job = execute(circuit, backend=backend, shots=shots, max_credits=max_credits)
@@ -371,14 +363,14 @@ class Utility(object):
                 lapse += 1
             logger.debug(job.status)
             result = job.result()
-        except Exception:
+        except QISKitError:
             sleep(900)
             logger.critical('run() - Exception occurred, retrying\n')
             return self.run(circuit, backend, shots, max_credits)
 
         try:
             counts = result.get_counts(circuit)
-        except Exception:
+        except QISKitError:
             logger.critical('run() - Exception occurred, retrying\n')
             return self.run(circuit, backend, shots, max_credits)
 
