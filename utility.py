@@ -144,13 +144,13 @@ class Utility(object):
             logger.log(logging.VERBOSE, 'cx() - inverse-cnot: (%s, %s)', str(control), str(target))
             # circuit.h(control_qubit)
             # circuit.h(target_qubit)
-            circuit.u2(pi, control_qubit)
-            circuit.u2(pi, target_qubit)
+            circuit.u2(0, pi, control_qubit)
+            circuit.u2(0, pi, target_qubit)
             circuit.cx(target_qubit, control_qubit)
             # circuit.h(control_qubit)
             # circuit.h(target_qubit)
-            circuit.u2(pi, control_qubit)
-            circuit.u2(pi, target_qubit)
+            circuit.u2(0, pi, control_qubit)
+            circuit.u2(0, pi, target_qubit)
         else:
             logger.critical('cx() - Cannot connect qubit %s to qubit %s', str(control), str(target))
             exit(3)
@@ -177,7 +177,7 @@ class Utility(object):
         for qubit in self.__connected:
             if qubit != start:
                 # circuit.h(quantum_r[qubit])
-                circuit.u2(pi, quantum_r[qubit])
+                circuit.u2(0, pi, quantum_r[qubit])
             else:
                 if initial is True:
                     if x is True:
@@ -185,7 +185,7 @@ class Utility(object):
                         circuit.u3(pi, 0, pi, quantum_r[qubit])
                 else:
                     # circuit.h(quantum_r[qubit])
-                    circuit.u2(pi, quantum_r[qubit])
+                    circuit.u2(0, pi, quantum_r[qubit])
 
     # place Pauli-X gates
     def place_x(self, circuit, quantum_r):
