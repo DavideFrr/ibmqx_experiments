@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # =============================================================================
+from math import pi
 
 __author__ = "Davide Ferrari"
 __copyright__ = "Copyright 2017, Quantum Information Science, University of Parma, Italy"
@@ -141,11 +142,15 @@ class Utility(object):
         elif control in self.__coupling_map[target]:
             circuit.barrier()
             logger.log(logging.VERBOSE, 'cx() - inverse-cnot: (%s, %s)', str(control), str(target))
-            circuit.h(control_qubit)
-            circuit.h(target_qubit)
+            # circuit.h(control_qubit)
+            # circuit.h(target_qubit)
+            circuit.u2(pi, control_qubit)
+            circuit.u2(pi, target_qubit)
             circuit.cx(target_qubit, control_qubit)
-            circuit.h(control_qubit)
-            circuit.h(target_qubit)
+            # circuit.h(control_qubit)
+            # circuit.h(target_qubit)
+            circuit.u2(pi, control_qubit)
+            circuit.u2(pi, target_qubit)
         else:
             logger.critical('cx() - Cannot connect qubit %s to qubit %s', str(control), str(target))
             exit(3)
@@ -171,13 +176,16 @@ class Utility(object):
     def place_h(self, circuit, start, quantum_r, initial=True, x=True):
         for qubit in self.__connected:
             if qubit != start:
-                circuit.h(quantum_r[qubit])
+                # circuit.h(quantum_r[qubit])
+                circuit.u2(pi, quantum_r[qubit])
             else:
                 if initial is True:
                     if x is True:
-                        circuit.x(quantum_r[qubit])
+                        # circuit.x(quantum_r[qubit])
+                        circuit.u3(pi, 0, pi, quantum_r[qubit])
                 else:
-                    circuit.h(quantum_r[qubit])
+                    # circuit.h(quantum_r[qubit])
+                    circuit.u2(pi, quantum_r[qubit])
 
     # place Pauli-X gates
     def place_x(self, circuit, quantum_r):
@@ -190,7 +198,8 @@ class Utility(object):
             if count <= 0:
                 break
             if i >= s_0:
-                circuit.x(quantum_r[qubit[0]])
+                # circuit.x(quantum_r[qubit[0]])
+                circuit.u3(pi, 0, pi, quantum_r[qubit[0]])
             else:
                 circuit.iden(quantum_r[qubit[0]])
             i += 1
@@ -199,7 +208,8 @@ class Utility(object):
             if i >= s_0:
                 circuit.iden(quantum_r[qubit[0]])
             else:
-                circuit.x(quantum_r[qubit[0]])
+                # circuit.x(quantum_r[qubit[0]])
+                circuit.u3(pi, 0, pi, quantum_r[qubit[0]])
             i += 1
 
     # final measure
@@ -289,8 +299,8 @@ class Utility(object):
 
     def compile(self, n_qubits, backend=local_sim, algo='ghz', oracle='11', custom_mode=False, compiling=True):
         size = self.set_size(backend, n_qubits)
-        quantum_r = QuantumRegister(size, "qr")
 
+        quantum_r = QuantumRegister(size, "qr")
         classical_r = ClassicalRegister(size, "cr")
 
         circuit = QuantumCircuit(quantum_r, classical_r, name=algo)
