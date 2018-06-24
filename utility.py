@@ -29,7 +29,8 @@ from time import sleep
 import myLogger
 from backends import *
 
-from qiskit import register, get_backend, execute, QuantumRegister, ClassicalRegister, QuantumCircuit, compile, QISKitError
+from qiskit import register, get_backend, execute, QuantumRegister, ClassicalRegister, QuantumCircuit, compile, \
+    QISKitError, QuantumJob, wrapper
 from IBMQuantumExperience import IBMQuantumExperience
 import config
 
@@ -324,18 +325,20 @@ class Utility(object):
         cobj['connected'] = connected
         cobj['qasm'] = QASM_source
         if compiling is True:
-            cobj['compiled'] = compile(circuit, backend)['circuits'][0]
+            cobj['compiled'] = compile(circuit, backend)
+        else:
+            cobj['compiled'] = compile(circuit, backend, skip_transpiler=True)
         return cobj
 
-    def run(self, circuit, backend=local_sim, shots=1024, max_credits=5):
+    def run(self, cobj, backend=local_sim, shots=1024, max_credits=5):
         try:
             register(config.APItoken, config.URL)  # set the APIToken and API url
         except ConnectionError:
             sleep(900)
             logger.critical('run() - API Exception occurred, retrying\n')
-            return self.run(circuit, backend, shots, max_credits)
+            return self.run(cobj['circuit'], backend, shots, max_credits)
 
-        logger.debug('run() - QASM:\n%s', str(circuit.qasm()))
+        logger.debug('run() - QASM:\n%s', str(cobj['circuit'].qasm()))
 
         while True:
             try:
@@ -363,7 +366,11 @@ class Utility(object):
             sleep(900)
 
         try:
-            job = execute(circuit, backend=backend, shots=shots, max_credits=max_credits)
+            # job = execute(circuit, backend=backend, shots=shots, max_credits=max_credits)
+            backend = wrapper.get_backend(backend)
+            q_job = QuantumJob(cobj['compiled'], backend=backend, preformatted=True, resources={
+                'max_credits': cobj['compiled']['config']['max_credits']})
+            job = backend.run(q_job)
             lapse = 0
             interval = 10
             while not job.done:
@@ -376,20 +383,20 @@ class Utility(object):
         except QISKitError:
             sleep(900)
             logger.critical('run() - Exception occurred, retrying\n')
-            return self.run(circuit, backend, shots, max_credits)
+            return self.run(cobj, backend, shots, max_credits)
 
         try:
-            counts = result.get_counts(circuit)
+            counts = result.get_counts(cobj['circuit'])
         except QISKitError:
             logger.critical('run() - Exception occurred, retrying\n')
-            return self.run(circuit, backend, shots, max_credits)
+            return self.run(cobj['circuit']['compiled'], backend, shots, max_credits)
 
         logger.debug('run() - counts:\n%s', str(counts))
 
         sorted_c = sorted(counts.items(), key=operator.itemgetter(1), reverse=True)
 
         robj = {
-            'circuit': circuit,
+            'circuit': cobj['circuit'],
             'result': result,
             'counts': sorted_c,
             'ran_qasm': result.get_ran_qasm(result.get_names()[0])
@@ -431,7 +438,7 @@ def ghz_exec(execution, backend, utility, n_qubits, num_shots=1024, directory='D
 
     cobj = utility.ghz(n_qubits, backend=backend, compiling=False)
 
-    robj = utility.run(cobj['circuit'], backend=backend, shots=num_shots)
+    robj = utility.run(cobj, backend=backend, shots=num_shots)
 
     filename = directory + backend + '/' + 'execution' + str(
         execution) + '/' + backend + '_' + str(num_shots) + '_' + str(
