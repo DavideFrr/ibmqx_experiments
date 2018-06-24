@@ -14,6 +14,8 @@
 # =============================================================================
 from math import pi
 
+from qiskit.tools.visualization import QCircuitImage
+
 __author__ = "Davide Ferrari"
 __copyright__ = "Copyright 2017, Quantum Information Science, University of Parma, Italy"
 __license__ = "Apache"
@@ -30,7 +32,7 @@ import myLogger
 from backends import *
 
 from qiskit import register, get_backend, execute, QuantumRegister, ClassicalRegister, QuantumCircuit, compile, \
-    QISKitError, QuantumJob, wrapper
+    QISKitError, QuantumJob, wrapper, qasm, unroll
 from IBMQuantumExperience import IBMQuantumExperience
 import config
 
@@ -566,3 +568,22 @@ def parity_exec(execution, backend, utility, n_qubits, oracle='11', num_shots=10
     out_f.close()
 
     return utility.exec_data(cobj, robj)
+
+
+def latex_drawer(qasm_circuit, filename=None,
+                 basis="id,u0,u1,u2,u3,x,y,z,h,s,sdg,t,tdg,rx,ry,rz,"
+                       "cx,cy,cz,ch,crz,cu1,cu3,swap,ccx,cswap",
+                 scale=0.7):
+    ast = qasm.Qasm(data=qasm_circuit).parse()
+    if basis:
+        # Split basis only if it is not the empty string.
+        basis = basis.split(',')
+    u = unroll.Unroller(ast, unroll.JsonBackend(basis))
+    u.execute()
+    json_circuit = u.backend.circuit
+    qcimg = QCircuitImage(json_circuit, scale)
+    latex = qcimg.latex()
+    if filename:
+        with open(filename, 'w') as latex_file:
+            latex_file.write(latex)
+    return latex
