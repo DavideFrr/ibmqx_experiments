@@ -1,3 +1,6 @@
+# DISCONTINUED
+## This repository will no longer be updated, go to https://github.com/qis-unipr/QuantumComputing for an updated version.
+
 # IBMQX Experiments
 The purpose of this repository is to demonstrate entanglement assisted invariance,
 also known as envariance, and parity learning by querying a uniform quantum example oracle,
